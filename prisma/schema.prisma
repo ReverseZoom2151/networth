@@ -274,7 +274,7 @@ model GoalTemplate {
 
   // Default amounts by region (stored as JSON)
   defaultAmounts  Json     // { "US": 5000, "UK": 4000, "EU": 4500 }
-  defaultTimeframe Int     @default(1)
+  defaultTimeframe Float   @default(1)
 
   tips            String[] // Array of tips
 
@@ -285,4 +285,39 @@ model GoalTemplate {
   updatedAt       DateTime @updatedAt
 
   @@index([active, category, order])
+}
+
+// ============================================
+// VECTOR SEARCH / RAG KNOWLEDGE BASE
+// ============================================
+
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+
+  // Content
+  content     String   @db.Text // The text that was embedded
+  title       String?  // Optional title for display
+
+  // Metadata
+  contentType String   // 'credit_tip', 'faq', 'article', 'guide'
+  category    String   // Content category
+  region      String?  // Optional region targeting
+
+  // Reference to original content
+  sourceId    String?  // ID of original CreditTip/FAQ/Article
+
+  // Vector embedding (stored as JSON array of floats)
+  embedding   Json?    // [0.123, -0.456, ...] 1536 dimensions for text-embedding-3-small
+
+  // Search optimization
+  keywords    String[] // Extracted keywords for hybrid search
+  importance  Int      @default(0) // Boost certain content in search results
+
+  active      Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([contentType, category, active])
+  @@index([active, importance])
 }

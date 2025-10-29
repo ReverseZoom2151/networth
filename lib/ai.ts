@@ -310,7 +310,8 @@ export async function getFinancialAdvice(
   userMessage: string,
   userGoal: UserGoal,
   conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [],
-  financialContext?: any
+  financialContext?: any,
+  relevantKnowledge?: Array<{ content: string; title?: string; contentType: string; similarity: number }>
 ): Promise<string> {
   const goalDescription = userGoal.customGoal || goalDescriptions[userGoal.type];
   const region = userGoal.region || 'US';
@@ -382,6 +383,17 @@ export async function getFinancialAdvice(
       const annualInterestCost = financialContext.monthlyDebtInterest * 12;
       enhancedContext += `- Paying ${formatCurrencyByRegion(annualInterestCost, region)}/year in debt interest - paying off debt could redirect this to savings\n`;
     }
+  }
+
+  // Add relevant knowledge from vector search (Phase 2 RAG)
+  if (relevantKnowledge && relevantKnowledge.length > 0) {
+    enhancedContext += '\n\n**Relevant Financial Knowledge:**\n';
+    enhancedContext += '(Use this information to provide accurate, well-informed answers)\n\n';
+    relevantKnowledge.forEach((item, index) => {
+      enhancedContext += `${index + 1}. ${item.title || item.contentType.toUpperCase()}\n`;
+      enhancedContext += `   ${item.content}\n`;
+      enhancedContext += `   (Relevance: ${(item.similarity * 100).toFixed(1)}%)\n\n`;
+    });
   }
 
   const systemPrompt = `You are Networth, a friendly and knowledgeable AI financial coach helping people achieve their financial goals.
