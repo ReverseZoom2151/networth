@@ -7,6 +7,7 @@ import { getGoalEmoji, getGoalTitle, formatCurrency, calculateMonthlySavings, ca
 import { useWhop, UserStorage } from '@/app/providers';
 import { getFirstSteps } from '@/lib/firstSteps';
 import { Navigation } from '@/components/Navigation';
+import { Card, CardBody, Button, LoadingScreen, Input } from '@/components/ui';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -104,11 +105,7 @@ export default function DashboardPage() {
   };
 
   if (loading || !goal) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-      </div>
-    );
+    return <LoadingScreen message="Loading your dashboard..." />;
   }
 
   const region = goal.region || 'US';
@@ -125,105 +122,128 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen gradient-bg">
       <Navigation />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Subscribe CTA Banner - Mobile/Desktop Friendly */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+        {/* Subscribe CTA Banner */}
         {!hasAccess && (
-          <div className="bg-gradient-to-r from-primary-500 to-purple-600 rounded-xl p-6 mb-6 text-white">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="relative bg-gradient-to-r from-primary-600 via-secondary-500 to-primary-600 rounded-2xl p-6 mb-6 text-white overflow-hidden shadow-soft-lg animate-slide-up">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex-1">
-                <h3 className="text-xl font-bold mb-1">Unlock Your Full Potential</h3>
+                <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-3 py-1 text-xs font-medium mb-2">
+                  <span>✨</span> Premium Features
+                </div>
+                <h3 className="text-2xl font-bold mb-1">Unlock Your Full Potential</h3>
                 <p className="text-sm text-white/90">
                   Get unlimited AI coaching and advanced features for just $10/month
                 </p>
               </div>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => router.push('/subscribe')}
-                className="w-full sm:w-auto bg-white text-primary-600 font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-full sm:w-auto"
               >
                 Subscribe Now
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {/* Goal Overview Card */}
-        <div className="bg-black rounded-2xl p-6 text-white mb-6 border border-gray-800">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-            <div className="flex-1">
-              <p className="text-gray-400 text-sm mb-1">Your Goal</p>
-              <h1 className="text-2xl sm:text-3xl font-bold flex items-center space-x-2">
-                <span>{getGoalEmoji(goal.type)}</span>
-                <span>{getGoalTitle(goal.type, goal.customGoal)}</span>
-              </h1>
+        <Card className="relative overflow-hidden mb-6 animate-slide-up" style={{animationDelay: '0.1s'}}>
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-500 via-secondary-500 to-primary-500" />
+          <CardBody className="p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+              <div className="flex-1">
+                <p className="text-gray-500 text-sm mb-2 font-medium">Your Goal</p>
+                <h1 className="text-3xl sm:text-4xl font-bold flex items-center space-x-3 text-gray-900">
+                  <span className="text-5xl">{getGoalEmoji(goal.type)}</span>
+                  <span>{getGoalTitle(goal.type, goal.customGoal)}</span>
+                </h1>
+              </div>
+              <div className="text-left sm:text-right bg-primary-50 rounded-2xl px-6 py-4">
+                <p className="text-primary-700 text-sm mb-1 font-medium">Target Amount</p>
+                <p className="text-3xl sm:text-4xl font-bold text-primary-900">
+                  {formatCurrency(targetAmount, region)}
+                </p>
+              </div>
             </div>
-            <div className="text-left sm:text-right">
-              <p className="text-gray-400 text-sm mb-1">Target</p>
-              <p className="text-2xl sm:text-3xl font-bold">
-                {formatCurrency(targetAmount, region)}
-              </p>
-            </div>
-          </div>
 
           {/* Progress Bar */}
           {currentAmount > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Progress</span>
-                <span className="text-sm font-semibold">{progressPercent}%</span>
+            <div className="mb-6 bg-gray-50 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-700">Progress</span>
+                <span className="text-lg font-bold text-primary-600">{progressPercent}%</span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+              <div className="relative w-full bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner-soft">
                 <div
-                  className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full transition-all duration-500"
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-success-500 via-primary-500 to-secondary-500 rounded-full transition-all duration-1000 shadow-glow"
                   style={{ width: `${Math.min(progressPercent, 100)}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
-                <span>Current: {formatCurrency(currentAmount, region)}</span>
-                <span>Remaining: {formatCurrency(Math.max(0, targetAmount - currentAmount), region)}</span>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="bg-white rounded-xl p-3 shadow-soft">
+                  <p className="text-xs text-gray-500 mb-1">Current</p>
+                  <p className="text-base font-bold text-success-600">{formatCurrency(currentAmount, region)}</p>
+                </div>
+                <div className="bg-white rounded-xl p-3 shadow-soft">
+                  <p className="text-xs text-gray-500 mb-1">Remaining</p>
+                  <p className="text-base font-bold text-gray-700">{formatCurrency(Math.max(0, targetAmount - currentAmount), region)}</p>
+                </div>
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <p className="text-gray-400 text-sm">Timeframe</p>
-              <p className="font-semibold">{goal.timeframe} years</p>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-secondary-50 rounded-xl p-4">
+              <p className="text-secondary-700 text-sm mb-1 font-medium">Timeframe</p>
+              <p className="text-2xl font-bold text-secondary-900">{goal.timeframe} years</p>
             </div>
-            <div className="text-right">
-              <p className="text-gray-400 text-sm">Recommended Monthly</p>
-              <p className="font-semibold">{formatCurrency(monthlySavings, region)}</p>
+            <div className="bg-success-50 rounded-xl p-4">
+              <p className="text-success-700 text-sm mb-1 font-medium">Monthly Target</p>
+              <p className="text-2xl font-bold text-success-900">{formatCurrency(monthlySavings, region)}</p>
             </div>
           </div>
 
-          <button
+          <Button
             onClick={openUpdateModal}
-            className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors border border-white/20"
+            variant="primary"
+            size="lg"
+            className="w-full"
           >
             Update Your Progress
-          </button>
-        </div>
+          </Button>
+          </CardBody>
+        </Card>
 
         {/* Daily Tip */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-200">
-          <div className="flex items-start space-x-3">
-            <span className="text-2xl flex-shrink-0">💡</span>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 mb-1">Today's Tip</h3>
-              <p className="text-gray-600 text-sm sm:text-base">{dailyTip || 'Loading your personalized tip...'}</p>
+        <Card hover className="mb-6 animate-slide-up bg-gradient-to-br from-warning-50 to-warning-100 border-warning-200" style={{animationDelay: '0.2s'}}>
+          <CardBody>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-warning-500 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                💡
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 mb-2 text-lg">Today's Tip</h3>
+                <p className="text-gray-700 leading-relaxed">{dailyTip || 'Loading your personalized tip...'}</p>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
 
         {/* Quick Actions Grid */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action) => (
-              <button
+            {quickActions.map((action, index) => (
+              <Card
                 key={action.name}
+                hover
+                className="cursor-pointer animate-scale-in"
+                style={{animationDelay: `${0.3 + index * 0.1}s`}}
                 onClick={() => {
                   if (action.premium && !hasAccess) {
                     router.push('/subscribe');
@@ -231,19 +251,22 @@ export default function DashboardPage() {
                     router.push(action.href);
                   }
                 }}
-                className="bg-white rounded-xl shadow-sm p-5 border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all text-left group"
               >
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-3xl">{action.icon}</span>
-                  {action.premium && !hasAccess && (
-                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Pro</span>
-                  )}
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary-600 transition-colors">
-                  {action.name}
-                </h3>
-                <p className="text-sm text-gray-600">{action.description}</p>
-              </button>
+                <CardBody className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="text-4xl">{action.icon}</div>
+                    {action.premium && !hasAccess && (
+                      <span className="text-xs bg-gradient-to-r from-warning-500 to-warning-600 text-white px-2.5 py-1 rounded-full font-semibold shadow">
+                        PRO
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2 text-lg group-hover:text-primary-600 transition-colors">
+                    {action.name}
+                  </h3>
+                  <p className="text-sm text-gray-600">{action.description}</p>
+                </CardBody>
+              </Card>
             ))}
           </div>
         </div>
