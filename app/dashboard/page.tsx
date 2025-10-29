@@ -7,7 +7,7 @@ import { getGoalEmoji, getGoalTitle, formatCurrency, calculateMonthlySavings, ca
 import { useWhop, UserStorage } from '@/app/providers';
 import { getFirstSteps } from '@/lib/firstSteps';
 import { Navigation } from '@/components/Navigation';
-import { Card, CardBody, Button, LoadingScreen, Input } from '@/components/ui';
+import { Card, CardBody, LoadingScreen } from '@/components/ui';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -128,25 +128,23 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
         {/* Subscribe CTA Banner */}
         {!hasAccess && (
-          <div className="relative bg-gradient-to-r from-primary-600 via-secondary-500 to-primary-600 rounded-2xl p-6 mb-6 text-white overflow-hidden shadow-soft-lg animate-slide-up">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="relative bg-black rounded-2xl p-6 mb-6 text-white border border-gray-800 shadow-soft-lg animate-slide-up">
             <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex-1">
-                <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-3 py-1 text-xs font-medium mb-2">
+                <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 text-xs font-medium mb-2">
                   <span>✨</span> Premium Features
                 </div>
                 <h3 className="text-2xl font-bold mb-1">Unlock Your Full Potential</h3>
-                <p className="text-sm text-white/90">
+                <p className="text-sm text-gray-400">
                   Get unlimited AI coaching and advanced features for just $10/month
                 </p>
               </div>
-              <Button
-                variant="secondary"
+              <button
                 onClick={() => router.push('/subscribe')}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto bg-white text-black font-semibold py-3 px-6 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 Subscribe Now
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -243,12 +241,12 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="text-4xl">{action.icon}</div>
                     {action.premium && !hasAccess && (
-                      <span className="text-xs bg-gradient-to-r from-warning-500 to-warning-600 text-white px-2.5 py-1 rounded-full font-semibold shadow">
+                      <span className="text-xs bg-black text-white px-2.5 py-1 rounded-full font-semibold">
                         PRO
                       </span>
                     )}
                   </div>
-                  <h3 className="font-bold text-gray-900 mb-2 text-lg group-hover:text-primary-600 transition-colors">
+                  <h3 className="font-bold text-gray-900 mb-2 text-lg group-hover:text-black transition-colors">
                     {action.name}
                   </h3>
                   <p className="text-sm text-gray-600">{action.description}</p>

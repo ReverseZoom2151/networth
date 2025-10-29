@@ -49,14 +49,14 @@ export function Navigation() {
                 onClick={() => handleNavigate(item.href, item.premium)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 ${
                   isActive(item.href)
-                    ? 'bg-primary-50 text-primary-600'
+                    ? 'bg-black text-white'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <span>{item.icon}</span>
                 <span>{item.name}</span>
                 {item.premium && !hasAccess && (
-                  <span className="ml-1 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
+                  <span className="ml-1 text-xs bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded">
                     Pro
                   </span>
                 )}
@@ -69,7 +69,7 @@ export function Navigation() {
             {!hasAccess && (
               <button
                 onClick={() => router.push('/subscribe')}
-                className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                className="bg-black hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
               >
                 Upgrade
               </button>
@@ -110,7 +110,7 @@ export function Navigation() {
                 onClick={() => handleNavigate(item.href, item.premium)}
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isActive(item.href)
-                    ? 'bg-primary-50 text-primary-600'
+                    ? 'bg-black text-white'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -119,7 +119,7 @@ export function Navigation() {
                   <span>{item.name}</span>
                 </div>
                 {item.premium && !hasAccess && (
-                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
                     Pro
                   </span>
                 )}
@@ -133,7 +133,7 @@ export function Navigation() {
                     router.push('/subscribe');
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-lg text-sm font-semibold transition-colors"
+                  className="w-full bg-black hover:bg-gray-900 text-white px-4 py-3 rounded-lg text-sm font-semibold transition-colors"
                 >
                   Upgrade to Pro
                 </button>
