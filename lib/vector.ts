@@ -13,12 +13,12 @@ const openai = new OpenAI({
 });
 
 // Embedding model configuration
-const EMBEDDING_MODEL = 'text-embedding-3-small'; // 1536 dimensions, $0.00002/1K tokens
-const EMBEDDING_DIMENSIONS = 1536;
+const EMBEDDING_MODEL = 'text-embedding-3-large'; // 3072 dimensions, $0.00013/1K tokens
+const EMBEDDING_DIMENSIONS = 3072;
 
 /**
  * Generate embedding vector for text
- * Cost: ~$0.00002 per 1,000 tokens
+ * Cost: ~$0.00013 per 1,000 tokens (6.5x more than small, 2.3% better performance)
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   try {
