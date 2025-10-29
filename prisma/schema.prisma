@@ -1,0 +1,288 @@
+// Networth Finance Coach - Database Schema
+// Production-ready structure for user data and dynamic content
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  whopId    String   @unique // Whop user ID
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  goal              UserGoal?
+  budgets           Budget[]
+  bills             Bill[]
+  debts             Debt[]
+  netWorthSnapshots NetWorthSnapshot[]
+  progressHistory   ProgressHistory[]
+
+  @@index([whopId])
+}
+
+// ============================================
+// USER FINANCIAL DATA
+// ============================================
+
+model UserGoal {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Goal details
+  type          String   // 'house', 'travel', 'family', 'wedding', 'investment', 'other'
+  customGoal    String?  // Custom goal description
+  targetAmount  Float
+  currentSavings Float   @default(0)
+  timeframe     Int      // Years
+
+  // User profile
+  region        String   // 'US', 'UK', 'EU'
+  currency      String   // 'USD', 'GBP', 'EUR'
+  monthlyBudget Float?
+
+  // Preferences
+  spendingCategories String[] // Array of spending categories
+
+  // Onboarding
+  onboardingComplete Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ProgressHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount    Float
+  note      String?
+  milestone Int?     // Percentage milestone reached (25, 50, 75, 100)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// ============================================
+// BUDGET TRACKING
+// ============================================
+
+model Budget {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Budget period
+  month     Int      // 1-12
+  year      Int
+
+  // Categories with allocated budgets
+  categories Json    // { "Food": { budgeted: 500, spent: 350 }, ... }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses  Expense[]
+
+  @@unique([userId, month, year])
+  @@index([userId, year, month])
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  budgetId  String
+  budget    Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  category  String
+  amount    Float
+  description String?
+  date      DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  @@index([budgetId, date])
+}
+
+// ============================================
+// BILLS & REMINDERS
+// ============================================
+
+model Bill {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  category  String   // 'Rent', 'Utilities', 'Subscriptions', etc.
+  amount    Float
+  dueDate   Int      // Day of month (1-31)
+
+  recurring Boolean  @default(true)
+  paid      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, dueDate])
+}
+
+// ============================================
+// DEBT MANAGEMENT
+// ============================================
+
+model Debt {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name            String
+  type            String   // 'Credit Card', 'Student Loan', 'Personal Loan', etc.
+  balance         Float
+  interestRate    Float    // Annual rate as decimal (0.20 = 20%)
+  minimumPayment  Float
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ============================================
+// NET WORTH TRACKING
+// ============================================
+
+model NetWorthSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Assets
+  savings     Float @default(0)
+  investments Float @default(0)
+  property    Float @default(0)
+  other       Float @default(0)
+
+  // Liabilities
+  loans       Float @default(0)
+  creditCards Float @default(0)
+  otherDebts  Float @default(0)
+
+  // Calculated
+  totalAssets      Float
+  totalLiabilities Float
+  netWorth         Float
+
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+// ============================================
+// DYNAMIC CONTENT (CMS)
+// ============================================
+
+model CreditTip {
+  id          String   @id @default(cuid())
+
+  region      String   // 'US', 'UK', 'EU', 'ALL'
+  category    String   // 'building_credit', 'maintaining_score', 'repairing_credit'
+  tipText     String   @db.Text
+  importance  Int      @default(0) // Higher = shown first
+
+  active      Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([region, category, active, importance])
+}
+
+model Article {
+  id          String   @id @default(cuid())
+
+  slug        String   @unique
+  title       String
+  excerpt     String?  @db.Text
+  content     String   @db.Text
+
+  category    String   // 'credit', 'budgeting', 'investing', 'debt', etc.
+  region      String?  // Optional region targeting
+
+  featured    Boolean  @default(false)
+  published   Boolean  @default(false)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Stats
+  views       Int      @default(0)
+
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, category])
+  @@index([slug])
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+
+  question  String
+  answer    String   @db.Text
+  category  String   // 'credit', 'budgeting', 'app', etc.
+  region    String?  // Optional region targeting
+  order     Int      @default(0) // Display order
+
+  active    Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, category, order])
+}
+
+// ============================================
+// GOAL TEMPLATES (Dynamic)
+// ============================================
+
+model GoalTemplate {
+  id              String   @id @default(cuid())
+
+  name            String
+  description     String   @db.Text
+  icon            String
+  category        String   // 'Security', 'Education', 'Lifestyle', etc.
+
+  // Default amounts by region (stored as JSON)
+  defaultAmounts  Json     // { "US": 5000, "UK": 4000, "EU": 4500 }
+  defaultTimeframe Int     @default(1)
+
+  tips            String[] // Array of tips
+
+  active          Boolean  @default(true)
+  order           Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([active, category, order])
+}
