@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWhop, UserStorage } from '@/app/providers';
+import { LoadingScreen } from '@/components/ui';
 
 export default function HomePage() {
   const router = useRouter();
@@ -25,12 +26,5 @@ export default function HomePage() {
     checkOnboarding();
   }, [router, userId, loading]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="text-center">
-        <img src="/logo.png" alt="Networth" className="w-20 h-20 mx-auto mb-4 animate-pulse" />
-        <p className="text-gray-900 font-medium">Loading Networth...</p>
-      </div>
-    </div>
-  );
+  return <LoadingScreen message="Welcome to Networth" />;
 }
