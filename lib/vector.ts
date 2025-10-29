@@ -105,8 +105,10 @@ export async function searchKnowledge(
     console.log('[Vector] Found', candidates.length, 'candidates to search');
 
     // Calculate similarity scores
-    const results = candidates
-      .map((item) => {
+    type Candidate = typeof candidates[number];
+    type ResultWithSimilarity = Candidate & { similarity: number };
+    const results: ResultWithSimilarity[] = candidates
+      .map((item: Candidate) => {
         const itemEmbedding = item.embedding as any as number[];
         const similarity = cosineSimilarity(queryEmbedding, itemEmbedding);
 
@@ -115,8 +117,8 @@ export async function searchKnowledge(
           similarity,
         };
       })
-      .filter((item) => item.similarity >= minSimilarity) // Filter by minimum similarity
-      .sort((a, b) => b.similarity - a.similarity) // Sort by similarity (highest first)
+      .filter((item: ResultWithSimilarity) => item.similarity >= minSimilarity) // Filter by minimum similarity
+      .sort((a: ResultWithSimilarity, b: ResultWithSimilarity) => b.similarity - a.similarity) // Sort by similarity (highest first)
       .slice(0, limit); // Limit results
 
     console.log('[Vector] Returning', results.length, 'results (min similarity:', minSimilarity, ')');
