@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       goal,
       history,
       financialContext,
-      relevantKnowledge.map(item => ({
+      relevantKnowledge.map((item: any) => ({
         content: item.content,
         title: item.title || undefined,
         contentType: item.contentType,
