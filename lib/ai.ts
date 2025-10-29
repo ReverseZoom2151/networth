@@ -309,7 +309,8 @@ function executeCalculatorTool(toolName: string, input: Record<string, unknown>)
 export async function getFinancialAdvice(
   userMessage: string,
   userGoal: UserGoal,
-  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  financialContext?: any
 ): Promise<string> {
   const goalDescription = userGoal.customGoal || goalDescriptions[userGoal.type];
   const region = userGoal.region || 'US';
@@ -326,6 +327,63 @@ export async function getFinancialAdvice(
     ? formatCurrencyByRegion(userGoal.currentSavings, region)
     : '';
 
+  // Build enhanced context from RAG data
+  let enhancedContext = '';
+  if (financialContext) {
+    // Debts section
+    if (financialContext.hasDebt && financialContext.debts.length > 0) {
+      enhancedContext += '\n\n**Current Debts:**\n';
+      financialContext.debts.forEach((debt: any) => {
+        enhancedContext += `- ${debt.name}: ${formatCurrencyByRegion(debt.balance, region)} at ${debt.interestRate}% APR (${formatCurrencyByRegion(debt.monthlyInterest, region)}/month in interest)\n`;
+      });
+      enhancedContext += `- Total Debt: ${formatCurrencyByRegion(financialContext.totalDebt, region)}\n`;
+      enhancedContext += `- Monthly Interest Cost: ${formatCurrencyByRegion(financialContext.monthlyDebtInterest, region)}\n`;
+      if (financialContext.highInterestDebt) {
+        enhancedContext += '- ⚠️ HAS HIGH-INTEREST DEBT (>15% APR) - This should be a priority!\n';
+      }
+    }
+
+    // Bills section
+    if (financialContext.bills && financialContext.bills.length > 0) {
+      enhancedContext += '\n**Monthly Recurring Bills:**\n';
+      financialContext.bills.slice(0, 5).forEach((bill: any) => {
+        enhancedContext += `- ${bill.name}: ${formatCurrencyByRegion(bill.amount, region)} (${bill.category})\n`;
+      });
+      enhancedContext += `- Total Monthly Bills: ${formatCurrencyByRegion(financialContext.totalMonthlyBills, region)}\n`;
+    }
+
+    // Goal progress section
+    if (financialContext.goal) {
+      enhancedContext += '\n**Goal Progress:**\n';
+      enhancedContext += `- Saved so far: ${formatCurrencyByRegion(financialContext.goal.currentSavings, region)} of ${formatCurrencyByRegion(financialContext.goal.targetAmount, region)} (${financialContext.goal.progressPercent.toFixed(1)}%)\n`;
+      enhancedContext += `- Amount remaining: ${formatCurrencyByRegion(financialContext.goal.remaining, region)}\n`;
+      enhancedContext += `- Monthly target to stay on track: ${formatCurrencyByRegion(financialContext.goal.monthlyTarget, region)}\n`;
+      enhancedContext += `- Currently ${financialContext.goal.onTrack ? '✅ ON TRACK' : '⚠️ BEHIND TARGET'}\n`;
+    }
+
+    // Net worth section
+    if (financialContext.netWorth) {
+      enhancedContext += '\n**Net Worth Overview:**\n';
+      enhancedContext += `- Current Net Worth: ${formatCurrencyByRegion(financialContext.netWorth.current, region)}\n`;
+      enhancedContext += `- Total Assets: ${formatCurrencyByRegion(financialContext.netWorth.totalAssets, region)}\n`;
+      enhancedContext += `- Total Liabilities: ${formatCurrencyByRegion(financialContext.netWorth.totalLiabilities, region)}\n`;
+      enhancedContext += `- Trend: ${financialContext.netWorth.trend === 'improving' ? '📈 Improving' : financialContext.netWorth.trend === 'declining' ? '📉 Declining' : '➡️ Stable'}\n`;
+    }
+
+    // Add actionable insights
+    enhancedContext += '\n**Key Insights:**\n';
+    if (financialContext.hasDebt && financialContext.highInterestDebt) {
+      enhancedContext += '- PRIORITY: Address high-interest debt first - it\'s costing significant money in interest\n';
+    }
+    if (financialContext.goal && !financialContext.goal.onTrack) {
+      enhancedContext += '- Behind on savings goal - consider increasing monthly contributions or adjusting timeline\n';
+    }
+    if (financialContext.monthlyDebtInterest > 0) {
+      const annualInterestCost = financialContext.monthlyDebtInterest * 12;
+      enhancedContext += `- Paying ${formatCurrencyByRegion(annualInterestCost, region)}/year in debt interest - paying off debt could redirect this to savings\n`;
+    }
+  }
+
   const systemPrompt = `You are Networth, a friendly and knowledgeable AI financial coach helping people achieve their financial goals.
 
 **User Context:**
@@ -337,6 +395,7 @@ ${targetAmountFormatted ? `- Target Amount: ${targetAmountFormatted}` : ''}
 ${currentSavingsFormatted ? `- Current Savings: ${currentSavingsFormatted}` : ''}
 ${monthlyBudgetFormatted ? `- Monthly Budget: ${monthlyBudgetFormatted}` : ''}
 ${userGoal.spendingCategories && userGoal.spendingCategories.length > 0 ? `- Main Spending Areas: ${userGoal.spendingCategories.join(', ')}` : ''}
+${enhancedContext}
 
 **Your Role:**
 - Provide clear, actionable financial advice tailored to their goal and region

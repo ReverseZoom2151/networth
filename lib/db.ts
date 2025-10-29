@@ -452,3 +452,138 @@ export async function getNetWorthHistory(whopId: string, limit: number = 12) {
     return [];
   }
 }
+
+// ============================================
+// RAG: USER FINANCIAL CONTEXT
+// ============================================
+
+/**
+ * Get comprehensive financial context for AI coaching
+ * Fetches all user data needed for personalized advice
+ */
+export async function getUserFinancialContext(whopId: string) {
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) {
+      console.log('[RAG] Database unavailable, returning empty context');
+      return null;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { whopId },
+      include: {
+        goal: true,
+        budgets: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        bills: {
+          where: { recurring: true },
+          orderBy: { dueDate: 'asc' },
+        },
+        debts: {
+          orderBy: { balance: 'desc' },
+        },
+        netWorthSnapshots: {
+          orderBy: { date: 'desc' },
+          take: 2, // Current and previous for trend
+        },
+      },
+    });
+
+    if (!user) {
+      console.log('[RAG] User not found in database');
+      return null;
+    }
+
+    // Calculate totals
+    const totalMonthlyBills = user.bills.reduce((sum, bill) => sum + bill.amount, 0);
+    const totalDebt = user.debts.reduce((sum, debt) => sum + debt.balance, 0);
+    const weightedDebtAPR = user.debts.length > 0
+      ? user.debts.reduce((sum, debt) => sum + (debt.interestRate * debt.balance), 0) / totalDebt
+      : 0;
+
+    // Calculate progress
+    const progressPercent = user.goal
+      ? (user.goal.currentSavings / user.goal.targetAmount) * 100
+      : 0;
+
+    // Calculate net worth trend
+    let netWorthTrend: 'improving' | 'declining' | 'stable' | 'unknown' = 'unknown';
+    if (user.netWorthSnapshots.length >= 2) {
+      const current = user.netWorthSnapshots[0].netWorth;
+      const previous = user.netWorthSnapshots[1].netWorth;
+      const change = ((current - previous) / Math.abs(previous)) * 100;
+
+      if (change > 2) netWorthTrend = 'improving';
+      else if (change < -2) netWorthTrend = 'declining';
+      else netWorthTrend = 'stable';
+    }
+
+    return {
+      // User basic info
+      region: user.goal?.region || 'US',
+      currency: user.goal?.currency || 'USD',
+
+      // Goal information
+      goal: user.goal ? {
+        type: user.goal.type,
+        customGoal: user.goal.customGoal,
+        targetAmount: user.goal.targetAmount,
+        currentSavings: user.goal.currentSavings,
+        remaining: user.goal.targetAmount - user.goal.currentSavings,
+        timeframe: user.goal.timeframe,
+        monthlyTarget: (user.goal.targetAmount - user.goal.currentSavings) / (user.goal.timeframe * 12),
+        progressPercent,
+        onTrack: progressPercent >= (100 / (user.goal.timeframe * 12)) * (Date.now() - user.goal.createdAt.getTime()) / (1000 * 60 * 60 * 24 * 30),
+      } : null,
+
+      // Budget information
+      budget: user.budgets[0] ? {
+        month: user.budgets[0].month,
+        year: user.budgets[0].year,
+        categories: user.budgets[0].categories as any,
+      } : null,
+
+      // Bills
+      bills: user.bills.map(bill => ({
+        name: bill.name,
+        category: bill.category,
+        amount: bill.amount,
+        dueDate: bill.dueDate,
+      })),
+      totalMonthlyBills,
+
+      // Debts
+      debts: user.debts.map(debt => ({
+        name: debt.name,
+        type: debt.type,
+        balance: debt.balance,
+        interestRate: debt.interestRate,
+        minimumPayment: debt.minimumPayment,
+        monthlyInterest: (debt.balance * debt.interestRate / 100) / 12,
+      })),
+      totalDebt,
+      weightedDebtAPR,
+      monthlyDebtInterest: (totalDebt * weightedDebtAPR / 100) / 12,
+
+      // Net worth
+      netWorth: user.netWorthSnapshots[0] ? {
+        current: user.netWorthSnapshots[0].netWorth,
+        totalAssets: user.netWorthSnapshots[0].totalAssets,
+        totalLiabilities: user.netWorthSnapshots[0].totalLiabilities,
+        trend: netWorthTrend,
+        lastUpdated: user.netWorthSnapshots[0].date,
+      } : null,
+
+      // Summary flags
+      hasDebt: totalDebt > 0,
+      highInterestDebt: user.debts.some(d => d.interestRate > 15),
+      hasGoal: !!user.goal,
+      goalProgress: progressPercent,
+    };
+  } catch (error) {
+    console.error('[RAG] Error getting user financial context:', error);
+    return null;
+  }
+}

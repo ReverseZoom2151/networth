@@ -58,6 +58,7 @@ export default function CoachPage() {
           message: inputMessage,
           goal: goal,
           history: messages,
+          userId: userId, // RAG: Pass userId to fetch financial context
         }),
       });
 
