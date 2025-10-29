@@ -276,33 +276,35 @@ export function GoalTemplates({ region, onSelectTemplate }: GoalTemplatesProps) 
       </div>
 
       {/* Templates Grid */}
-      {categories.map(category => (
+      {categories.map((category) => (
         <div key={category}>
           <h3 className="text-lg font-semibold text-gray-900 mb-3">{category}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {templates.filter(t => t.category === category).map(template => (
-              <button
-                key={template.id}
-                onClick={() => handleSelectTemplate(template)}
-                className="text-left p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="text-4xl">{template.icon}</span>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">{template.name}</h4>
-                    <p className="text-sm text-gray-600 mb-2">{template.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-primary-600">
-                        {formatCurrency(template.defaultAmount[region], region)}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {template.defaultTimeframe} {template.defaultTimeframe === 1 ? 'year' : 'years'}
-                      </span>
+            {templates
+              .filter((t) => t.category === category)
+              .map((template) => (
+                <button
+                  key={`${category}-${template.id}`}
+                  onClick={() => handleSelectTemplate(template)}
+                  className="text-left p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-4xl">{template.icon}</span>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">{template.name}</h4>
+                      <p className="text-sm text-gray-600 mb-2">{template.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-primary-600">
+                          {formatCurrency(template.defaultAmount[region], region)}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {template.defaultTimeframe} {template.defaultTimeframe === 1 ? 'year' : 'years'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
           </div>
         </div>
       ))}
