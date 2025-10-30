@@ -136,7 +136,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
         </div>
         <button
           onClick={() => setIsAddingSnapshot(true)}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors"
         >
           + Update Net Worth
         </button>
@@ -144,14 +144,14 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
 
       {/* Current Net Worth Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
-          <p className="text-sm text-green-700 font-medium">Current Net Worth</p>
-          <p className={`text-3xl font-bold ${currentNetWorth >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+        <div className="bg-gray-100 rounded-lg p-4">
+          <p className="text-sm text-gray-700 font-medium">Current Net Worth</p>
+          <p className={`text-3xl font-bold ${currentNetWorth >= 0 ? 'text-gray-900' : 'text-gray-900'}`}>
             {formatCurrency(currentNetWorth, region)}
           </p>
           {snapshots.length > 1 && (
             <div className="flex items-center gap-1 mt-1">
-              <span className={`text-sm font-semibold ${netWorthChange >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+              <span className={`text-sm font-semibold ${netWorthChange >= 0 ? 'text-gray-700' : 'text-gray-700'}`}>
                 {netWorthChange >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(netWorthChange), region)}
               </span>
               <span className="text-xs text-gray-600">
@@ -160,13 +160,13 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
             </div>
           )}
         </div>
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
-          <p className="text-sm text-blue-700 font-medium">Total Assets</p>
-          <p className="text-3xl font-bold text-blue-900">{formatCurrency(currentAssets, region)}</p>
+        <div className="bg-gray-100 rounded-lg p-4">
+          <p className="text-sm text-gray-700 font-medium">Total Assets</p>
+          <p className="text-3xl font-bold text-gray-900">{formatCurrency(currentAssets, region)}</p>
         </div>
-        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4">
-          <p className="text-sm text-red-700 font-medium">Total Debts</p>
-          <p className="text-3xl font-bold text-red-900">{formatCurrency(currentDebts, region)}</p>
+        <div className="bg-gray-100 rounded-lg p-4">
+          <p className="text-sm text-gray-700 font-medium">Total Debts</p>
+          <p className="text-3xl font-bold text-gray-900">{formatCurrency(currentDebts, region)}</p>
         </div>
       </div>
 
@@ -182,8 +182,8 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
             {/* Gradient fill */}
             <defs>
               <linearGradient id="netWorthGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="rgb(34, 197, 94)" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="rgb(34, 197, 94)" stopOpacity="0.05" />
+                <stop offset="0%" stopColor="rgb(0, 0, 0)" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="rgb(0, 0, 0)" stopOpacity="0.05" />
               </linearGradient>
             </defs>
 
@@ -207,7 +207,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
                 y1={chartHeight / 2}
                 x2={chartWidth - padding}
                 y2={chartHeight / 2}
-                stroke="#ef4444"
+                stroke="#6b7280"
                 strokeWidth="2"
                 strokeDasharray="5,5"
               />
@@ -223,7 +223,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
             <path
               d={getChartPath()}
               fill="none"
-              stroke="rgb(34, 197, 94)"
+              stroke="rgb(0, 0, 0)"
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -246,7 +246,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
                     cy={y}
                     r="5"
                     fill="white"
-                    stroke="rgb(34, 197, 94)"
+                    stroke="rgb(0, 0, 0)"
                     strokeWidth="2"
                   />
                   <circle
@@ -281,7 +281,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
               <div
                 key={snapshot.date}
                 className={`flex items-center justify-between p-4 rounded-lg ${
-                  isLatest ? 'bg-primary-50 border-2 border-primary-200' : 'bg-gray-50'
+                  isLatest ? 'bg-gray-100 border-2 border-gray-300' : 'bg-gray-50'
                 }`}
               >
                 <div className="flex-1">
@@ -290,7 +290,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
                       {formatDate(snapshot.date)}
                     </p>
                     {isLatest && (
-                      <span className="px-2 py-0.5 text-xs font-semibold bg-primary-500 text-white rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-semibold bg-black text-white rounded-full">
                         Latest
                       </span>
                     )}
@@ -301,14 +301,14 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className={`text-xl font-bold ${snapshot.netWorth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`text-xl font-bold ${snapshot.netWorth >= 0 ? 'text-gray-900' : 'text-gray-900'}`}>
                       {formatCurrency(snapshot.netWorth, region)}
                     </p>
                   </div>
                   {!isLatest && (
                     <button
                       onClick={() => deleteSnapshot(snapshot.date)}
-                      className="text-gray-400 hover:text-red-600 transition-colors"
+                      className="text-gray-400 hover:text-gray-900 transition-colors"
                     >
                       🗑️
                     </button>
@@ -342,7 +342,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
                   value={newSnapshot.assets}
                   onChange={(e) => setNewSnapshot({ ...newSnapshot, assets: e.target.value })}
                   placeholder="0.00"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
 
@@ -358,7 +358,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
                   value={newSnapshot.debts}
                   onChange={(e) => setNewSnapshot({ ...newSnapshot, debts: e.target.value })}
                   placeholder="0.00"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
 
@@ -368,8 +368,8 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
                   <p className="text-sm text-gray-600 mb-1">Your Net Worth</p>
                   <p className={`text-2xl font-bold ${
                     (parseFloat(newSnapshot.assets) || 0) - (parseFloat(newSnapshot.debts) || 0) >= 0
-                      ? 'text-green-600'
-                      : 'text-red-600'
+                      ? 'text-gray-900'
+                      : 'text-gray-900'
                   }`}>
                     {formatCurrency(
                       (parseFloat(newSnapshot.assets) || 0) - (parseFloat(newSnapshot.debts) || 0),
@@ -392,7 +392,7 @@ export function NetWorthDashboard({ region }: NetWorthDashboardProps) {
               </button>
               <button
                 onClick={addSnapshot}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors"
               >
                 Save Snapshot
               </button>
