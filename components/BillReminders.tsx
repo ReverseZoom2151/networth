@@ -108,17 +108,17 @@ export function BillReminders({ region }: BillRemindersProps) {
   };
 
   const getStatusColor = (daysUntil: number, isPaid: boolean) => {
-    if (isPaid) return 'text-green-600';
-    if (daysUntil < 0) return 'text-red-600';
-    if (daysUntil <= 3) return 'text-orange-600';
+    if (isPaid) return 'text-gray-600';
+    if (daysUntil < 0) return 'text-gray-900';
+    if (daysUntil <= 3) return 'text-gray-700';
     return 'text-gray-600';
   };
 
   const getStatusBadge = (daysUntil: number, isPaid: boolean) => {
-    if (isPaid) return { text: 'Paid', color: 'bg-green-100 text-green-800' };
-    if (daysUntil < 0) return { text: 'Overdue', color: 'bg-red-100 text-red-800' };
-    if (daysUntil === 0) return { text: 'Due Today', color: 'bg-orange-100 text-orange-800' };
-    if (daysUntil <= 3) return { text: `${daysUntil} days`, color: 'bg-yellow-100 text-yellow-800' };
+    if (isPaid) return { text: 'Paid', color: 'bg-gray-200 text-gray-800' };
+    if (daysUntil < 0) return { text: 'Overdue', color: 'bg-gray-300 text-gray-900' };
+    if (daysUntil === 0) return { text: 'Due Today', color: 'bg-gray-300 text-gray-900' };
+    if (daysUntil <= 3) return { text: `${daysUntil} days`, color: 'bg-gray-200 text-gray-800' };
     return { text: `${daysUntil} days`, color: 'bg-gray-100 text-gray-800' };
   };
 
@@ -146,7 +146,7 @@ export function BillReminders({ region }: BillRemindersProps) {
         </div>
         <button
           onClick={() => setIsAddingBill(true)}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors"
         >
           + Add Bill
         </button>
@@ -154,18 +154,18 @@ export function BillReminders({ region }: BillRemindersProps) {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
-          <p className="text-sm text-blue-700 font-medium">Total Bills</p>
-          <p className="text-2xl font-bold text-blue-900">{bills.length}</p>
+        <div className="bg-gray-100 rounded-lg p-4">
+          <p className="text-sm text-gray-700 font-medium">Total Bills</p>
+          <p className="text-2xl font-bold text-gray-900">{bills.length}</p>
         </div>
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
-          <p className="text-sm text-orange-700 font-medium">Upcoming</p>
-          <p className="text-2xl font-bold text-orange-900">{formatCurrency(totalUpcoming, region)}</p>
+        <div className="bg-gray-100 rounded-lg p-4">
+          <p className="text-sm text-gray-700 font-medium">Upcoming</p>
+          <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalUpcoming, region)}</p>
         </div>
         {totalOverdue > 0 && (
-          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4">
-            <p className="text-sm text-red-700 font-medium">Overdue</p>
-            <p className="text-2xl font-bold text-red-900">{formatCurrency(totalOverdue, region)}</p>
+          <div className="bg-gray-100 rounded-lg p-4">
+            <p className="text-sm text-gray-700 font-medium">Overdue</p>
+            <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalOverdue, region)}</p>
           </div>
         )}
       </div>
@@ -178,7 +178,7 @@ export function BillReminders({ region }: BillRemindersProps) {
           <p className="text-gray-600 mb-4">Start tracking your recurring payments</p>
           <button
             onClick={() => setIsAddingBill(true)}
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors"
           >
             Add Your First Bill
           </button>
@@ -202,7 +202,7 @@ export function BillReminders({ region }: BillRemindersProps) {
                       type="checkbox"
                       checked={bill.isPaid}
                       onChange={() => togglePaid(bill.id)}
-                      className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      className="w-5 h-5 rounded border-gray-300 text-black focus:ring-black"
                     />
                     <span className="text-2xl">{bill.icon}</span>
                     <div className="flex-1">
@@ -225,7 +225,7 @@ export function BillReminders({ region }: BillRemindersProps) {
                     </span>
                     <button
                       onClick={() => deleteBill(bill.id)}
-                      className="text-gray-400 hover:text-red-600 transition-colors"
+                      className="text-gray-400 hover:text-gray-900 transition-colors"
                     >
                       🗑️
                     </button>
@@ -251,7 +251,7 @@ export function BillReminders({ region }: BillRemindersProps) {
                   value={newBill.name}
                   onChange={(e) => setNewBill({ ...newBill, name: e.target.value })}
                   placeholder="e.g., Rent, Netflix, Phone Bill"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export function BillReminders({ region }: BillRemindersProps) {
                   value={newBill.amount}
                   onChange={(e) => setNewBill({ ...newBill, amount: e.target.value })}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
 
@@ -277,7 +277,7 @@ export function BillReminders({ region }: BillRemindersProps) {
                   value={newBill.dueDate}
                   onChange={(e) => setNewBill({ ...newBill, dueDate: e.target.value })}
                   placeholder="1-31"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
 
@@ -286,7 +286,7 @@ export function BillReminders({ region }: BillRemindersProps) {
                 <select
                   value={newBill.category}
                   onChange={(e) => setNewBill({ ...newBill, category: e.target.value as Bill['category'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                 >
                   {BILL_CATEGORIES.map(cat => (
                     <option key={cat.value} value={cat.value}>
@@ -302,7 +302,7 @@ export function BillReminders({ region }: BillRemindersProps) {
                   id="recurring"
                   checked={newBill.recurring}
                   onChange={(e) => setNewBill({ ...newBill, recurring: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
                 />
                 <label htmlFor="recurring" className="ml-2 text-sm text-gray-700">
                   Recurring monthly
@@ -323,7 +323,7 @@ export function BillReminders({ region }: BillRemindersProps) {
               <button
                 onClick={addBill}
                 disabled={!newBill.name || !newBill.amount || !newBill.dueDate}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add Bill
               </button>
