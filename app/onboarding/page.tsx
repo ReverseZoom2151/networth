@@ -43,9 +43,9 @@ export default function OnboardingPage() {
   // Wait for Whop to initialize
   if (whopLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Networth...</p>
         </div>
       </div>
@@ -161,19 +161,19 @@ export default function OnboardingPage() {
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step >= 1 ? 'bg-primary-500 text-white' : 'bg-gray-200 text-gray-500'
+              step >= 1 ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'
             }`}>
               1
             </div>
-            <div className={`w-12 h-1 ${step >= 2 ? 'bg-primary-500' : 'bg-gray-200'}`} />
+            <div className={`w-12 h-1 ${step >= 2 ? 'bg-black' : 'bg-gray-200'}`} />
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step >= 2 ? 'bg-primary-500 text-white' : 'bg-gray-200 text-gray-500'
+              step >= 2 ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'
             }`}>
               2
             </div>
-            <div className={`w-12 h-1 ${step >= 3 ? 'bg-primary-500' : 'bg-gray-200'}`} />
+            <div className={`w-12 h-1 ${step >= 3 ? 'bg-black' : 'bg-gray-200'}`} />
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step >= 3 ? 'bg-primary-500 text-white' : 'bg-gray-200 text-gray-500'
+              step >= 3 ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'
             }`}>
               3
             </div>
@@ -198,8 +198,8 @@ export default function OnboardingPage() {
                     onClick={() => handleGoalSelect(option.type)}
                     className={`p-4 rounded-xl border-2 transition-all text-left ${
                       selectedGoal === option.type
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-primary-200 hover:bg-gray-50'
+                        ? 'border-black bg-gray-100'
+                        : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex items-start space-x-3">
@@ -211,7 +211,7 @@ export default function OnboardingPage() {
                         <p className="text-sm text-gray-600 mb-1">
                           {option.description}
                         </p>
-                        <p className="text-xs text-primary-600">
+                        <p className="text-xs text-gray-600">
                           {option.popularity}
                         </p>
                       </div>
@@ -230,7 +230,7 @@ export default function OnboardingPage() {
                     value={customGoal}
                     onChange={(e) => setCustomGoal(e.target.value)}
                     placeholder="E.g., Start my own business"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
                 </div>
               )}
@@ -245,7 +245,7 @@ export default function OnboardingPage() {
 
               <button
                 onClick={handleNext}
-                className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
                 Next →
               </button>
@@ -273,8 +273,8 @@ export default function OnboardingPage() {
                       onClick={() => setSelectedRegion(region.value)}
                       className={`p-4 rounded-xl border-2 transition-all text-left ${
                         selectedRegion === region.value
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-primary-200 hover:bg-gray-50'
+                          ? 'border-black bg-gray-100'
+                          : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -284,7 +284,7 @@ export default function OnboardingPage() {
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           selectedRegion === region.value
-                            ? 'border-primary-500 bg-primary-500'
+                            ? 'border-black bg-black'
                             : 'border-gray-300'
                         }`}>
                           {selectedRegion === region.value && (
@@ -314,7 +314,7 @@ export default function OnboardingPage() {
                     onChange={(e) => setCurrentSavings(e.target.value)}
                     placeholder="0"
                     min="0"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
@@ -338,8 +338,8 @@ export default function OnboardingPage() {
                       onClick={() => toggleSpendingCategory(category.id)}
                       className={`p-3 rounded-lg border-2 transition-all text-left text-sm ${
                         spendingCategories.includes(category.id)
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-primary-200 hover:bg-gray-50'
+                          ? 'border-black bg-gray-100'
+                          : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center space-x-2">
@@ -368,7 +368,7 @@ export default function OnboardingPage() {
                 </button>
                 <button
                   onClick={handleNextToFinal}
-                  className="flex-1 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                  className="flex-1 bg-black hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                 >
                   Next →
                 </button>
@@ -392,8 +392,8 @@ export default function OnboardingPage() {
                     onClick={() => setTimeframe(option.value)}
                     className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                       timeframe === option.value
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-primary-200 hover:bg-gray-50'
+                        ? 'border-black bg-gray-100'
+                        : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -407,7 +407,7 @@ export default function OnboardingPage() {
                       </div>
                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                         timeframe === option.value
-                          ? 'border-primary-500 bg-primary-500'
+                          ? 'border-black bg-black'
                           : 'border-gray-300'
                       }`}>
                         {timeframe === option.value && (
@@ -440,7 +440,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={handleComplete}
                   disabled={saving}
-                  className="flex-1 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="flex-1 bg-black hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {saving ? (
                     <>

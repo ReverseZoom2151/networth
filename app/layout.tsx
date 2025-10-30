@@ -3,7 +3,7 @@ import "./globals.css";
 import { WhopProvider } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Networth - Your Personal AI Financial Coach",
+  title: "Networth",
   description: "Get personalized financial advice powered by AI. Achieve your money goals faster with daily tips, goal tracking, and 24/7 support.",
   icons: {
     icon: [

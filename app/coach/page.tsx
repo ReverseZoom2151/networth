@@ -96,7 +96,7 @@ export default function CoachPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
       </div>
     );
   }
@@ -168,12 +168,12 @@ export default function CoachPage() {
                     <div
                       className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
                         msg.role === 'user'
-                          ? 'bg-primary-500 text-white'
+                          ? 'bg-black text-white'
                           : 'bg-gray-100 text-gray-900'
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                      <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-primary-100' : 'text-gray-500'}`}>
+                      <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-gray-300' : 'text-gray-500'}`}>
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -204,12 +204,12 @@ export default function CoachPage() {
                 onKeyPress={handleKeyPress}
                 placeholder="Ask me anything about money..."
                 disabled={sending}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-50 text-sm"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-50 text-sm"
               />
               <button
                 onClick={sendMessage}
                 disabled={!inputMessage.trim() || sending}
-                className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                className="bg-black hover:bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

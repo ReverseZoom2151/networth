@@ -53,7 +53,7 @@ export default function CreditScorePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
       </div>
     );
   }
@@ -139,18 +139,18 @@ export default function CreditScorePage() {
 
   const getScoreRating = (score: number) => {
     if (region === 'UK') {
-      if (score >= 961) return { label: 'Excellent', color: 'text-green-600', bg: 'bg-green-50' };
-      if (score >= 881) return { label: 'Good', color: 'text-blue-600', bg: 'bg-blue-50' };
-      if (score >= 721) return { label: 'Fair', color: 'text-yellow-600', bg: 'bg-yellow-50' };
-      if (score >= 561) return { label: 'Poor', color: 'text-orange-600', bg: 'bg-orange-50' };
-      return { label: 'Very Poor', color: 'text-red-600', bg: 'bg-red-50' };
+      if (score >= 961) return { label: 'Excellent', color: 'text-gray-900', bg: 'bg-gray-100' };
+      if (score >= 881) return { label: 'Good', color: 'text-gray-800', bg: 'bg-gray-100' };
+      if (score >= 721) return { label: 'Fair', color: 'text-gray-700', bg: 'bg-gray-50' };
+      if (score >= 561) return { label: 'Poor', color: 'text-gray-600', bg: 'bg-gray-50' };
+      return { label: 'Very Poor', color: 'text-gray-500', bg: 'bg-gray-50' };
     } else {
       // US scale
-      if (score >= 800) return { label: 'Exceptional', color: 'text-green-600', bg: 'bg-green-50' };
-      if (score >= 740) return { label: 'Very Good', color: 'text-blue-600', bg: 'bg-blue-50' };
-      if (score >= 670) return { label: 'Good', color: 'text-yellow-600', bg: 'bg-yellow-50' };
-      if (score >= 580) return { label: 'Fair', color: 'text-orange-600', bg: 'bg-orange-50' };
-      return { label: 'Poor', color: 'text-red-600', bg: 'bg-red-50' };
+      if (score >= 800) return { label: 'Exceptional', color: 'text-gray-900', bg: 'bg-gray-100' };
+      if (score >= 740) return { label: 'Very Good', color: 'text-gray-800', bg: 'bg-gray-100' };
+      if (score >= 670) return { label: 'Good', color: 'text-gray-700', bg: 'bg-gray-50' };
+      if (score >= 580) return { label: 'Fair', color: 'text-gray-600', bg: 'bg-gray-50' };
+      return { label: 'Poor', color: 'text-gray-500', bg: 'bg-gray-50' };
     }
   };
 
@@ -160,14 +160,14 @@ export default function CreditScorePage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-primary-500 to-purple-600 rounded-2xl p-8 text-white mb-8">
+        <div className="bg-black rounded-2xl p-8 text-white mb-8">
           <div className="text-5xl mb-4">📊</div>
           <h1 className="text-3xl font-bold mb-2">{content.title}</h1>
           <p className="text-lg text-white/90">{content.subtitle}</p>
         </div>
 
         {/* Research Insight */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-8">
+        <div className="bg-gray-100 border border-gray-300 rounded-xl p-6 mb-8">
           <div className="flex items-start space-x-3">
             <span className="text-2xl">💡</span>
             <div>
@@ -187,9 +187,9 @@ export default function CreditScorePage() {
             Your credit score is a number that represents how reliable you are at borrowing and repaying money.
             Think of it as your financial reputation score - lenders use it to decide whether to lend to you and at what interest rate.
           </p>
-          <div className="bg-primary-50 rounded-lg p-4">
-            <p className="font-semibold text-primary-900 mb-1">Score Range: {content.scoreRange}</p>
-            <p className="text-sm text-primary-700">Higher is better - more trustworthy borrower</p>
+          <div className="bg-gray-100 rounded-lg p-4">
+            <p className="font-semibold text-gray-900 mb-1">Score Range: {content.scoreRange}</p>
+            <p className="text-sm text-gray-700">Higher is better - more trustworthy borrower</p>
           </div>
         </div>
 
@@ -255,7 +255,7 @@ export default function CreditScorePage() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-semibold text-gray-900">{factor.title}</h3>
-                    <span className="text-sm font-bold text-primary-600">{factor.weight}</span>
+                    <span className="text-sm font-bold text-gray-600">{factor.weight}</span>
                   </div>
                   <p className="text-sm text-gray-600">{factor.desc}</p>
                 </div>
@@ -288,7 +288,7 @@ export default function CreditScorePage() {
           <div className="space-y-3">
             {tipsToDisplay.map((tip, index) => (
               <div key={index} className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 text-primary-700 text-sm font-bold flex items-center justify-center mt-0.5">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-sm font-bold flex items-center justify-center mt-0.5">
                   {index + 1}
                 </span>
                 <p className="text-gray-700">{tip}</p>
@@ -298,7 +298,7 @@ export default function CreditScorePage() {
         </div>
 
         {/* Why It Matters */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 mb-6 border border-purple-200">
+        <div className="bg-gray-100 rounded-xl p-6 mb-6 border border-gray-300">
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Why Your Credit Score Matters</h2>
           <p className="text-gray-700">{content.impact}</p>
           <div className="mt-4 p-4 bg-white rounded-lg">
@@ -314,14 +314,14 @@ export default function CreditScorePage() {
         </div>
 
         {/* CTA */}
-        <div className="bg-primary-500 rounded-xl p-6 text-white text-center">
+        <div className="bg-black rounded-xl p-6 text-white text-center">
           <h3 className="text-xl font-bold mb-2">Start Building Your Credit Today</h3>
           <p className="mb-4">
             Understanding your credit score is the first step. Check it for free and start improving it now!
           </p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="bg-white text-primary-600 font-semibold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors"
+            className="bg-white text-black font-semibold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors"
           >
             Back to Your Financial Journey
           </button>

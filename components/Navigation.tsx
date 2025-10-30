@@ -11,7 +11,7 @@ export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { name: 'Home', href: '/dashboard', icon: '🏠' },
     { name: 'Tools', href: '/tools', icon: '🛠️' },
     { name: 'Coach', href: '/coach', icon: '💬', premium: true },
     { name: 'Learn', href: '/credit-score', icon: '📚' },

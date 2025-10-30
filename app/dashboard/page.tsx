@@ -274,7 +274,7 @@ export default function DashboardPage() {
                     <h3 className="font-semibold text-gray-900 mb-1 flex items-center flex-wrap gap-2">
                       <span>{step.title}</span>
                       {step.actionable && (
-                        <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap">
                           Learn More
                         </span>
                       )}
@@ -288,7 +288,7 @@ export default function DashboardPage() {
                 <button
                   key={step.id}
                   onClick={() => router.push('/credit-score')}
-                  className="bg-white rounded-xl shadow-sm p-5 border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all text-left w-full"
+                  className="bg-white rounded-xl shadow-sm p-5 border border-gray-200 hover:border-gray-400 hover:shadow-md transition-all text-left w-full"
                 >
                   {cardContent}
                 </button>
@@ -363,7 +363,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleUpdateProgress}
                 disabled={isSaving}
-                className="flex-1 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+                className="flex-1 bg-black hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
               >
                 {isSaving ? (
                   <>
@@ -404,14 +404,14 @@ export default function DashboardPage() {
                 {getMilestoneMessage(celebrationMilestone).message}
               </p>
 
-              <div className="bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl p-4 mb-6">
+              <div className="bg-gray-100 rounded-xl p-4 mb-6">
                 <p className="text-sm font-semibold text-gray-700 mb-1">Your Progress</p>
-                <p className="text-4xl font-bold text-primary-600">{celebrationMilestone}%</p>
+                <p className="text-4xl font-bold text-gray-900">{celebrationMilestone}%</p>
               </div>
 
               <button
                 onClick={() => setCelebrationMilestone(null)}
-                className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
                 Continue Your Journey
               </button>
