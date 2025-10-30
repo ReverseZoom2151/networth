@@ -34,6 +34,7 @@ model User {
   widgets           Widget[]
   guiltyPleasures   GuiltyPleasure[]
   notifications     Notification[]
+  achievements      Achievement[]
 
   @@index([whopId])
 }
@@ -456,6 +457,9 @@ model Streak {
   longestStreak   Int      @default(0)
   lastActivity    DateTime?
 
+  // Sharing
+  isShared        Boolean  @default(false)
+
   // Milestones reached
   milestonesReached Json   // { "7": true, "30": true, "100": false }
 
@@ -602,4 +606,384 @@ model SmartSuggestion {
 
   @@index([userId, status, priority])
   @@index([suggestionType, status])
+}
+
+// ============================================
+// PEER COMPARISON & SOCIAL FEATURES
+// ============================================
+
+model PeerMetric {
+  id              String   @id @default(cuid())
+
+  // Aggregation scope
+  goalType        String   // 'house', 'travel', 'family', etc.
+  region          String   // 'US', 'UK', 'EU'
+  timeframe       Int      // Years
+
+  // Aggregated metrics (calculated weekly)
+  averageSavings  Float
+  medianSavings   Float
+  averageProgress Float    // Percentage
+
+  // Percentile breakpoints
+  percentile25    Float
+  percentile50    Float
+  percentile75    Float
+  percentile90    Float
+
+  // Sample size
+  userCount       Int      // Number of users in this cohort
+
+  // Stats for benchmarking
+  averageMonthlyDeposit Float
+  averageTimeToGoal     Float?   // Months
+  successRate           Float?   // % who reached goal
+
+  // Snapshot date
+  calculatedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([goalType, region, timeframe])
+  @@index([calculatedAt])
+}
+
+model Achievement {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Achievement details
+  type            String   // 'streak_milestone', 'savings_goal', 'debt_paid', 'first_investment', 'budget_master'
+  title           String
+  description     String   @db.Text
+
+  // Visual
+  icon            String   // Emoji or icon name
+  color           String   @default("#10b981") // Badge color
+
+  // Achievement value (for sorting/display)
+  value           Float?   // e.g., streak days, amount saved
+
+  // Sharing
+  isShareable     Boolean  @default(true)
+  isShared        Boolean  @default(false)
+  sharedAt        DateTime?
+
+  // Milestone tracking
+  milestone       String?  // '7_day_streak', '1000_saved', etc.
+
+  earnedAt        DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([userId, earnedAt])
+  @@index([isShared, sharedAt])
+  @@index([type, isShared])
+}
+
+model UserAchievementShare {
+  id              String   @id @default(cuid())
+  userId          String
+
+  // Sharing preferences
+  shareStreaks    Boolean  @default(true)
+  shareSavings    Boolean  @default(true)
+  shareDebtPayoff Boolean  @default(true)
+  shareMilestones Boolean  @default(true)
+
+  // Privacy settings
+  anonymousSharing Boolean @default(false) // Share without name/details
+  allowLeaderboard Boolean @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId])
+}
+
+// ============================================
+// NEWS & INFORMATION DECIPHERING
+// ============================================
+
+model NewsImpact {
+  id              String   @id @default(cuid())
+
+  // News details
+  title           String
+  summary         String   @db.Text
+  source          String?  // 'Bank of England', 'Government', etc.
+  category        String   // 'interest_rates', 'policy', 'markets', 'products'
+
+  // Relevance
+  region          String?  // Target region
+  affectsGoalTypes String[] // Which goal types this impacts
+
+  // Impact type
+  impactType      String   // 'positive', 'negative', 'neutral', 'action_required'
+  urgency         String   @default("normal") // 'low', 'normal', 'high', 'urgent'
+
+  // Content
+  fullContent     String?  @db.Text
+  sourceUrl       String?
+  imageUrl        String?
+
+  // Quick actions
+  hasQuickAction  Boolean  @default(false)
+  actionLabel     String?
+  actionUrl       String?
+  actionType      String?  // 'switch_account', 'apply_product', 'adjust_goal'
+
+  // Dates
+  publishedAt     DateTime @default(now())
+  expiresAt       DateTime? // For time-sensitive news
+
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category, region, active, publishedAt])
+  @@index([affectsGoalTypes])
+}
+
+model UserNewsImpact {
+  id              String   @id @default(cuid())
+  userId          String
+  newsImpactId    String
+
+  // Personalized impact calculation
+  personalizedImpact String @db.Text // Claude-generated explanation
+  impactAmount    Float?   // Calculated financial impact (e.g., "£50 more per year")
+
+  // Status
+  viewed          Boolean  @default(false)
+  actionTaken     Boolean  @default(false)
+  dismissed       Boolean  @default(false)
+
+  viewedAt        DateTime?
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, newsImpactId])
+  @@index([userId, viewed])
+}
+
+// ============================================
+// BEHAVIORAL INTERVENTIONS
+// ============================================
+
+model InterventionTrigger {
+  id              String   @id @default(cuid())
+
+  // Trigger definition
+  triggerType     String   // 'overspending', 'missed_savings', 'debt_increase', 'unusual_spend'
+  category        String?  // Spending category (if applicable)
+
+  // Conditions
+  threshold       Float?   // e.g., 1.2 for 20% overspend
+  consecutive     Int      @default(1) // How many periods to trigger
+
+  // Intervention message
+  title           String
+  message         String   @db.Text
+  severity        String   // 'info', 'warning', 'urgent'
+
+  // Suggestions
+  suggestedAction String?  @db.Text
+  alternativeOptions String[] // Array of alternative behaviors
+
+  // Display
+  icon            String?
+  color           String?
+
+  active          Boolean  @default(true)
+  priority        Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([triggerType, active])
+}
+
+model InterventionHistory {
+  id              String   @id @default(cuid())
+  userId          String
+  triggerId       String
+
+  // Context when triggered
+  contextData     Json     // Details about what triggered it
+  calculatedImpact Float?  // e.g., "You'd save £100/month"
+
+  // User response
+  viewed          Boolean  @default(false)
+  actionTaken     Boolean  @default(false)
+  dismissed       Boolean  @default(false)
+  feedback        String?  // 'helpful', 'not_helpful', 'annoying'
+
+  viewedAt        DateTime?
+  actionTakenAt   DateTime?
+  triggeredAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([userId, triggeredAt])
+  @@index([triggerId, actionTaken])
+}
+
+// ============================================
+// FINANCIAL PRODUCTS DATABASE
+// ============================================
+
+model FinancialProduct {
+  id              String   @id @default(cuid())
+
+  // Product details
+  name            String
+  provider        String
+  productType     String   // 'savings_account', 'credit_card', 'isa', 'investment_platform'
+  region          String   // 'US', 'UK', 'EU'
+
+  // Rates & fees
+  interestRate    Float?   // For savings/debt products
+  apr             Float?   // For credit products
+  fees            Json?    // Various fees structure
+
+  // Key features
+  description     String   @db.Text
+  keyFeatures     String[] // Bullet points
+
+  // Dual benefits (research finding: "two for one deals")
+  primaryBenefit  String   // e.g., "High interest rate"
+  secondaryBenefit String  // e.g., "Builds credit score"
+
+  // Eligibility
+  minDeposit      Float?
+  minIncome       Float?
+  minCreditScore  Int?
+  eligibilityNotes String? @db.Text
+
+  // Links & actions
+  applicationUrl  String?
+  imageUrl        String?
+  logoUrl         String?
+
+  // Categorization for matching
+  suitableForGoals String[] // 'house', 'travel', etc.
+  riskLevel       String?   // 'low', 'medium', 'high' for investments
+
+  // Display
+  featured        Boolean  @default(false)
+  priority        Int      @default(0)
+  active          Boolean  @default(true)
+
+  // Stats
+  clickCount      Int      @default(0)
+  applicationCount Int     @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([productType, region, active])
+  @@index([suitableForGoals, active, priority])
+}
+
+model ProductRecommendation {
+  id              String   @id @default(cuid())
+  userId          String
+  productId       String
+
+  // Matching score
+  relevanceScore  Float    // 0.0 - 1.0
+  matchReason     String   @db.Text // Why this product matches
+
+  // Calculated impact
+  potentialBenefit Float?  // Financial benefit
+  timeToGoal      Float?   // How much faster they'd reach goal
+
+  // User interaction
+  viewed          Boolean  @default(false)
+  clicked         Boolean  @default(false)
+  applied         Boolean  @default(false)
+
+  viewedAt        DateTime?
+  appliedAt       DateTime?
+  recommendedAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId, relevanceScore])
+  @@index([productId, applied])
+}
+
+// ============================================
+// INVESTMENT EDUCATION
+// ============================================
+
+model InvestmentProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+
+  // Risk assessment
+  riskTolerance   String   // 'conservative', 'moderate', 'aggressive'
+  investmentGoals String[] // 'growth', 'income', 'preservation'
+  timeHorizon     Int      // Years
+
+  // Quiz results
+  quizScore       Int?
+  quizAnswers     Json?    // Store quiz responses
+
+  // Experience
+  hasInvested     Boolean  @default(false)
+  investmentTypes String[] // 'stocks', 'bonds', 'etf', 'crypto'
+
+  // Preferences
+  monthlyInvestment Float?
+  preferredPlatforms String[] // 'Vanguard', 'Fidelity', etc.
+
+  // Education progress
+  modulesCompleted String[]
+  lastEducationAt DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([riskTolerance])
+}
+
+// ============================================
+// SUCCESS STORIES / ROLE MODELS
+// ============================================
+
+model SuccessStory {
+  id              String   @id @default(cuid())
+
+  // Person details
+  name            String
+  age             Int?
+  occupation      String?
+  region          String   // US, CA, UK, EU
+
+  // Achievement
+  goalType        String   // 'emergency_fund', 'house', 'debt_free', 'travel', 'car'
+  goalTitle       String   // Short title like "Saved $10k in 18 months"
+  startingPoint   String   @db.Text // Where they started
+  achievement     String   @db.Text // What they accomplished
+
+  // Financial details
+  amountSaved     Float?
+  timeframe       Int      // Months
+  monthlyContribution Float?
+
+  // Story
+  story           String   @db.Text // Their full narrative
+  challenges      String[] // Obstacles they faced
+  strategies      String[] // What worked for them
+  keyTakeaway     String   @db.Text // Main lesson
+
+  // Metadata
+  featured        Boolean  @default(false)
+  verified        Boolean  @default(true)
+  inspirationScore Int     @default(0) // 0-100, how inspiring/relatable
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([goalType, region, featured])
+  @@index([featured, inspirationScore])
 }

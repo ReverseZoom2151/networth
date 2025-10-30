@@ -128,9 +128,23 @@ export default function OnboardingPage() {
     setSaving(true);
 
     try {
-      // Store goal using Whop-aware storage
+      // Store goal using Whop-aware storage (for backward compatibility)
       await UserStorage.setGoal(userId, goal);
       await UserStorage.setOnboardingComplete(userId);
+
+      // Also save to database for news and other features
+      const dbResponse = await fetch('/api/user/goal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          whopId: userId,
+          goal,
+        }),
+      });
+
+      if (!dbResponse.ok) {
+        console.warn('Failed to save goal to database, but continuing with localStorage');
+      }
 
       // Navigate to dashboard
       router.push('/dashboard');

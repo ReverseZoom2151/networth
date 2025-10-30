@@ -1,0 +1,293 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui';
+import NewsImpactCard from './NewsImpactCard';
+
+interface NewsImpact {
+  id: string;
+  title: string;
+  summary: string;
+  source: string | null;
+  category: string;
+  region: string | null;
+  affectsGoalTypes: string[];
+  impactType: 'positive' | 'negative' | 'neutral' | 'action_required';
+  urgency: 'low' | 'normal' | 'high' | 'urgent';
+  fullContent: string | null;
+  sourceUrl: string | null;
+  imageUrl: string | null;
+  hasQuickAction: boolean;
+  actionLabel: string | null;
+  actionUrl: string | null;
+  actionType: string | null;
+  publishedAt: string;
+  personalizedImpact?: string;
+  impactAmount?: number;
+  viewed: boolean;
+}
+
+interface NewsImpactFeedProps {
+  userId: string;
+  limit?: number;
+  category?: string;
+  urgency?: string;
+}
+
+export default function NewsImpactFeed({
+  userId,
+  limit = 10,
+  category,
+  urgency,
+}: NewsImpactFeedProps) {
+  const [newsItems, setNewsItems] = useState<NewsImpact[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>(category || 'all');
+  const [selectedUrgency, setSelectedUrgency] = useState<string>(urgency || 'all');
+
+  useEffect(() => {
+    if (userId) {
+      fetchNews();
+    } else {
+      setLoading(false);
+      setError('Please log in to view personalized news');
+    }
+  }, [userId, selectedCategory, selectedUrgency, limit]);
+
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = new URLSearchParams({
+        userId,
+        limit: limit.toString(),
+      });
+
+      if (selectedCategory && selectedCategory !== 'all') {
+        params.append('category', selectedCategory);
+      }
+      if (selectedUrgency && selectedUrgency !== 'all') {
+        params.append('urgency', selectedUrgency);
+      }
+
+      const response = await fetch(`/api/news/impacts?${params.toString()}`);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        if (response.status === 404 && errorData.error?.includes('goal')) {
+          setError('Set up your financial goal to see personalized news');
+          return;
+        }
+
+        throw new Error(errorData.error || 'Failed to fetch news');
+      }
+
+      const data = await response.json();
+      setNewsItems(data);
+    } catch (err) {
+      console.error('Failed to fetch news:', err);
+      setError('Unable to load news feed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleView = async (newsId: string) => {
+    try {
+      await fetch('/api/news/view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, newsId }),
+      });
+
+      // Update local state
+      setNewsItems((prev) =>
+        prev.map((item) =>
+          item.id === newsId ? { ...item, viewed: true } : item
+        )
+      );
+    } catch (err) {
+      console.error('Failed to mark news as viewed:', err);
+    }
+  };
+
+  const handleAction = async (newsId: string, actionType: string) => {
+    try {
+      await fetch('/api/news/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, newsId, actionType }),
+      });
+
+      // Optionally refresh news feed
+      fetchNews();
+    } catch (err) {
+      console.error('Failed to track action:', err);
+    }
+  };
+
+  const handleDismiss = async (newsId: string) => {
+    try {
+      await fetch('/api/news/view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, newsId, dismissed: true }),
+      });
+
+      // Remove from local state
+      setNewsItems((prev) => prev.filter((item) => item.id !== newsId));
+    } catch (err) {
+      console.error('Failed to dismiss news:', err);
+    }
+  };
+
+  const categories = [
+    { value: 'all', label: 'All News', icon: '📰' },
+    { value: 'interest_rates', label: 'Interest Rates', icon: '💰' },
+    { value: 'policy', label: 'Policy Changes', icon: '📋' },
+    { value: 'markets', label: 'Market News', icon: '📊' },
+    { value: 'products', label: 'New Products', icon: '🏦' },
+  ];
+
+  const urgencyFilters = [
+    { value: 'all', label: 'All' },
+    { value: 'urgent', label: 'Urgent Only' },
+    { value: 'high', label: 'High Priority' },
+  ];
+
+  const unreadCount = newsItems.filter((item) => !item.viewed).length;
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} className="p-6">
+            <div className="animate-pulse space-y-3">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-full"></div>
+              <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    const isGoalError = error.includes('financial goal');
+    const isLoginError = error.includes('log in');
+
+    return (
+      <Card className="p-8 text-center">
+        <div className="max-w-md mx-auto">
+          <div className="text-6xl mb-4">
+            {isGoalError ? '🎯' : isLoginError ? '🔒' : '⚠️'}
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {isGoalError ? 'Set Your Goal First' : isLoginError ? 'Login Required' : 'Oops!'}
+          </h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          {isGoalError && (
+            <a
+              href="/goals"
+              className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              Set Up Goal →
+            </a>
+          )}
+          {!isGoalError && !isLoginError && (
+            <button
+              onClick={() => fetchNews()}
+              className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+          )}
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Financial News</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Personalized insights for your financial goals
+            {unreadCount > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-purple-600 text-white text-xs rounded-full">
+                {unreadCount} new
+              </span>
+            )}
+          </p>
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-2">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+            {categories.map((cat) => (
+              <option key={cat.value} value={cat.value}>
+                {cat.icon} {cat.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedUrgency}
+            onChange={(e) => setSelectedUrgency(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+            {urgencyFilters.map((filter) => (
+              <option key={filter.value} value={filter.value}>
+                {filter.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* News Feed */}
+      {newsItems.length === 0 ? (
+        <Card className="p-8 text-center">
+          <div className="text-5xl mb-4">📰</div>
+          <p className="text-gray-500 mb-2">No news items yet</p>
+          <p className="text-sm text-gray-400">
+            We'll notify you when financial news impacts your goals
+          </p>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {newsItems.map((newsItem) => (
+            <NewsImpactCard
+              key={newsItem.id}
+              news={newsItem}
+              onView={handleView}
+              onAction={handleAction}
+              onDismiss={handleDismiss}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Load More */}
+      {newsItems.length >= limit && (
+        <div className="text-center">
+          <button
+            onClick={() => fetchNews()}
+            className="px-6 py-2 text-sm text-purple-600 hover:text-purple-700 font-medium"
+          >
+            Load more news
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

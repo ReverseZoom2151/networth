@@ -8,6 +8,9 @@ import { useWhop, UserStorage } from '@/app/providers';
 import { getFirstSteps } from '@/lib/firstSteps';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardBody, LoadingScreen } from '@/components/ui';
+import { NewsWidget } from '@/components/dashboard/NewsWidget';
+import { InterventionsWidget } from '@/components/dashboard/InterventionsWidget';
+import { ProductsWidget } from '@/components/dashboard/ProductsWidget';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -218,6 +221,13 @@ export default function DashboardPage() {
             </div>
           </CardBody>
         </Card>
+
+        {/* Dashboard Widgets Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slide-up" style={{animationDelay: '0.3s'}}>
+          <NewsWidget userId={userId} />
+          <InterventionsWidget userId={userId} />
+          <ProductsWidget userId={userId} />
+        </div>
 
         {/* Quick Actions Grid */}
         <div className="mb-8">

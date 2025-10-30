@@ -12,9 +12,12 @@ export function Navigation() {
 
   const navigation = [
     { name: 'Home', href: '/dashboard', icon: '🏠' },
-    { name: 'Tools', href: '/tools', icon: '🛠️' },
+    { name: 'Goals', href: '/goals', icon: '🎯' },
+    { name: 'News', href: '/news', icon: '📰' },
+    { name: 'Products', href: '/products', icon: '💳' },
+    { name: 'Invest', href: '/invest', icon: '📈' },
+    { name: 'Stories', href: '/stories', icon: '⭐' },
     { name: 'Coach', href: '/coach', icon: '💬', premium: true },
-    { name: 'Learn', href: '/credit-score', icon: '📚' },
   ];
 
   const isActive = (href: string) => pathname === href;
@@ -75,7 +78,7 @@ export function Navigation() {
               </button>
             )}
             <button
-              onClick={() => router.push('/onboarding')}
+              onClick={() => router.push('/settings')}
               className="text-gray-600 hover:text-gray-900 text-sm"
             >
               Settings
@@ -140,7 +143,7 @@ export function Navigation() {
               )}
               <button
                 onClick={() => {
-                  router.push('/onboarding');
+                  router.push('/settings');
                   setMobileMenuOpen(false);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-gray-900"

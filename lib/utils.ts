@@ -38,7 +38,7 @@ export function getGoalEmoji(goalType: string): string {
 }
 
 // Get goal title
-export function getGoalTitle(goalType: string, customGoal?: string): string {
+export function getGoalTitle(goalType: string, customGoal?: string | null): string {
   if (customGoal) return customGoal;
 
   const titleMap: Record<string, string> = {
