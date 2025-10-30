@@ -91,7 +91,14 @@ export async function searchKnowledge(
     const where: any = { active: true };
     if (contentType) where.contentType = contentType;
     if (category) where.category = category;
-    if (region) where.region = { in: [region, null] }; // Match region or universal content
+
+    // Handle region filtering with OR logic (to include both region-specific and universal content)
+    if (region) {
+      where.OR = [
+        { region: region },
+        { region: null }
+      ];
+    }
 
     // Fetch all potential matches (with embedding)
     const candidates = await prisma.knowledgeBase.findMany({

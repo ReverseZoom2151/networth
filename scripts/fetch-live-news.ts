@@ -1,5 +1,6 @@
 // Script to fetch real-time financial news and store in database
 // Run this script periodically (e.g., every 6 hours) to refresh news
+// Supports: NewsAPI (free), Alpha Vantage (free), Perplexity (premium fallback)
 
 import { config } from 'dotenv';
 config({ path: '.env.local' });
@@ -12,20 +13,37 @@ import {
   determineImpactType,
   determineUrgency,
 } from '../lib/newsAPI.js';
+import {
+  fetchPremiumFinancialNews,
+  isPerplexityAvailable
+} from '../lib/perplexityAPI.js';
 
 const prisma = new PrismaClient();
 
 async function fetchAndStoreNews() {
   console.log('🔄 Fetching live financial news...');
+  console.log(`   Perplexity API: ${isPerplexityAvailable() ? '✓ Available (Premium)' : '✗ Not configured'}`);
 
   try {
-    // Try NewsAPI first
-    let articles = await fetchFinancialNews('all', 30);
+    let articles = [];
+    let source = 'unknown';
+
+    // Try NewsAPI first (free tier)
+    articles = await fetchFinancialNews('all', 30);
+    source = 'NewsAPI';
 
     // If NewsAPI fails or returns nothing, try Alpha Vantage
     if (articles.length === 0) {
       console.log('⚠️  NewsAPI returned no results, trying Alpha Vantage...');
       articles = await fetchAlphaVantageNews(['financial_markets', 'economy_fiscal'], 30);
+      source = 'Alpha Vantage';
+    }
+
+    // If both free APIs fail and Perplexity is available, use it as fallback
+    if (articles.length === 0 && isPerplexityAvailable()) {
+      console.log('⚠️  Free APIs exhausted, using Perplexity (Premium)...');
+      articles = await fetchPremiumFinancialNews('US', 30);
+      source = 'Perplexity Premium';
     }
 
     if (articles.length === 0) {
@@ -33,7 +51,7 @@ async function fetchAndStoreNews() {
       return;
     }
 
-    console.log(`✓ Fetched ${articles.length} articles`);
+    console.log(`✓ Fetched ${articles.length} articles from ${source}`);
 
     // Deactivate old news (older than 7 days)
     const sevenDaysAgo = new Date();

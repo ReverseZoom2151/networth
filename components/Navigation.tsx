@@ -14,10 +14,11 @@ export function Navigation() {
     { name: 'Home', href: '/dashboard', icon: '🏠' },
     { name: 'Goals', href: '/goals', icon: '🎯' },
     { name: 'News', href: '/news', icon: '📰' },
+    { name: 'Research', href: '/research', icon: '🔍' },
     { name: 'Products', href: '/products', icon: '💳' },
     { name: 'Invest', href: '/invest', icon: '📈' },
     { name: 'Stories', href: '/stories', icon: '⭐' },
-    { name: 'Coach', href: '/coach', icon: '💬', premium: true },
+    { name: 'Coach', href: '/coach', icon: '💬' },
   ];
 
   const isActive = (href: string) => pathname === href;
@@ -34,18 +35,18 @@ export function Navigation() {
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-8">
           {/* Logo */}
           <button
             onClick={() => router.push('/dashboard')}
-            className="flex items-center space-x-2 flex-shrink-0"
+            className="flex items-center space-x-3 flex-shrink-0 min-w-[140px]"
           >
             <img src="/logo.png" alt="Networth" className="w-8 h-8" />
             <span className="font-bold text-gray-900 text-lg hidden sm:inline">Networth</span>
           </button>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-1 flex-1 justify-center">
             {navigation.map((item) => (
               <button
                 key={item.name}

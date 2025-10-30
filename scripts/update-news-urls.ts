@@ -20,7 +20,7 @@ async function updateNewsUrls() {
     const updates: any = {};
 
     // Fix region - change US to null (global news)
-    if (article.region === 'US') {
+    if (article.region === 'US' && article.source) {
       const sourceLower = article.source.toLowerCase();
 
       if (sourceLower.includes('uk') || sourceLower.includes('britain') || sourceLower.includes('british')) {

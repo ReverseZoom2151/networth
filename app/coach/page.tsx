@@ -101,17 +101,17 @@ export default function CoachPage() {
     );
   }
 
-  // Check access
-  if (!hasAccess && !checkingAccess) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <LockedFeature featureName="AI Financial Coach" />
-        </main>
-      </div>
-    );
-  }
+  // Check access - DISABLED FOR TESTING
+  // if (!hasAccess && !checkingAccess) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50">
+  //       <Navigation />
+  //       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  //         <LockedFeature featureName="AI Financial Coach" />
+  //       </main>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
