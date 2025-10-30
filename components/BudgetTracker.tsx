@@ -20,11 +20,11 @@ interface BudgetTrackerProps {
 const DEFAULT_CATEGORIES: Omit<BudgetCategory, 'budgeted' | 'spent'>[] = [
   { id: 'food', name: 'Food & Dining', icon: '🍔', color: 'bg-orange-500' },
   { id: 'rent', name: 'Rent & Utilities', icon: '🏠', color: 'bg-blue-500' },
-  { id: 'transport', name: 'Transportation', icon: '🚗', color: 'bg-green-500' },
+  { id: 'transport', name: 'Transportation', icon: '🚗', color: 'bg-gray-500' },
   { id: 'entertainment', name: 'Entertainment', icon: '🎮', color: 'bg-purple-500' },
   { id: 'shopping', name: 'Shopping', icon: '🛍️', color: 'bg-pink-500' },
   { id: 'education', name: 'Education', icon: '📚', color: 'bg-indigo-500' },
-  { id: 'health', name: 'Health & Fitness', icon: '💪', color: 'bg-red-500' },
+  { id: 'health', name: 'Health & Fitness', icon: '💪', color: 'bg-gray-900' },
   { id: 'other', name: 'Other', icon: '💰', color: 'bg-gray-500' },
 ];
 
@@ -85,9 +85,9 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
 
   const getProgressColor = (spent: number, budgeted: number) => {
     const percentage = (spent / budgeted) * 100;
-    if (percentage >= 100) return 'bg-red-500';
-    if (percentage >= 80) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (percentage >= 100) return 'bg-gray-900';
+    if (percentage >= 80) return 'bg-gray-600';
+    return 'bg-gray-500';
   };
 
   const totalBudgeted = categories.reduce((sum, cat) => sum + cat.budgeted, 0);
@@ -126,7 +126,7 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
                 step="10"
                 value={category.budgeted || ''}
                 onChange={(e) => updateBudget(category.id, parseFloat(e.target.value) || 0)}
-                className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                 placeholder="0"
               />
             </div>
@@ -142,7 +142,7 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
           </div>
           <button
             onClick={() => setIsSetupMode(false)}
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors"
           >
             Start Tracking
           </button>
@@ -162,7 +162,7 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
         </div>
         <div className="text-right">
           <p className="text-sm text-gray-600">Remaining This Month</p>
-          <p className={`text-2xl font-bold ${totalRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <p className={`text-2xl font-bold ${totalRemaining >= 0 ? 'text-gray-700' : 'text-gray-900'}`}>
             {formatCurrency(totalRemaining, region)}
           </p>
         </div>
@@ -204,7 +204,7 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
                 </div>
                 <button
                   onClick={() => setSelectedCategory(category.id)}
-                  className="px-3 py-1 text-sm bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors"
+                  className="px-3 py-1 text-sm bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors"
                 >
                   + Add
                 </button>
@@ -222,10 +222,10 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
 
               {/* Remaining Amount */}
               <div className="flex justify-between items-center text-sm">
-                <span className={isOverBudget ? 'text-red-600 font-medium' : 'text-gray-600'}>
+                <span className={isOverBudget ? 'text-gray-900 font-medium' : 'text-gray-600'}>
                   {isOverBudget ? 'Over by' : 'Remaining'}
                 </span>
-                <span className={`font-semibold ${isOverBudget ? 'text-red-600' : 'text-green-600'}`}>
+                <span className={`font-semibold ${isOverBudget ? 'text-gray-900' : 'text-gray-700'}`}>
                   {formatCurrency(Math.abs(remaining), region)}
                 </span>
               </div>
@@ -244,7 +244,7 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
         </button>
         <button
           onClick={resetAllBudgets}
-          className="flex-1 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
         >
           Reset Spending
         </button>
@@ -264,7 +264,7 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
               value={expenseAmount}
               onChange={(e) => setExpenseAmount(e.target.value)}
               placeholder="Enter amount"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent mb-4"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent mb-4"
               autoFocus
             />
             <div className="flex gap-3">
@@ -285,7 +285,7 @@ export function BudgetTracker({ region }: BudgetTrackerProps) {
                   }
                 }}
                 disabled={!expenseAmount || parseFloat(expenseAmount) <= 0}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add
               </button>
