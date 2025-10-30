@@ -28,6 +28,12 @@ model User {
   debts             Debt[]
   netWorthSnapshots NetWorthSnapshot[]
   progressHistory   ProgressHistory[]
+  bankConnections   BankConnection[]
+  transactions      Transaction[]
+  streaks           Streak[]
+  widgets           Widget[]
+  guiltyPleasures   GuiltyPleasure[]
+  notifications     Notification[]
 
   @@index([whopId])
 }
@@ -320,4 +326,280 @@ model KnowledgeBase {
 
   @@index([contentType, category, active])
   @@index([active, importance])
+}
+
+// ============================================
+// BANKING INTEGRATION (Open Banking API)
+// ============================================
+
+model BankConnection {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Banking provider details
+  provider        String   // 'truelayer', 'plaid', 'mock'
+  providerAccountId String @unique // Provider's account ID
+
+  // Account information
+  accountName     String
+  accountType     String   // 'checking', 'savings', 'credit_card'
+  currency        String   @default("GBP")
+
+  // Balance (cached from API)
+  currentBalance  Float    @default(0)
+  availableBalance Float   @default(0)
+
+  // Connection status
+  isActive        Boolean  @default(true)
+  lastSynced      DateTime?
+
+  // Access tokens (encrypted)
+  accessToken     String?  @db.Text // Encrypted
+  refreshToken    String?  @db.Text // Encrypted
+  tokenExpiresAt  DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions    Transaction[]
+
+  @@index([userId, isActive])
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bankConnectionId String?
+  bankConnection  BankConnection? @relation(fields: [bankConnectionId], references: [id], onDelete: SetNull)
+
+  // Transaction details
+  amount          Float
+  currency        String   @default("GBP")
+  description     String
+  merchantName    String?
+
+  // Categorization
+  category        String   // Auto-categorized or manual
+  isRecurring     Boolean  @default(false)
+
+  // Type
+  type            String   // 'debit', 'credit'
+
+  // Dates
+  transactionDate DateTime
+  postedDate      DateTime?
+
+  // Provider details
+  providerTransactionId String? @unique
+
+  // Smart features
+  isGuiltyPleasure Boolean @default(false)
+  guiltyPleasureId String?
+  guiltyPleasure   GuiltyPleasure? @relation(fields: [guiltyPleasureId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime @default(now())
+
+  @@index([userId, transactionDate])
+  @@index([category, transactionDate])
+  @@index([providerTransactionId])
+}
+
+// ============================================
+// GUILTY PLEASURES FEATURE
+// ============================================
+
+model GuiltyPleasure {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Pleasure details
+  name            String   // e.g., "Barista Coffee", "Takeout"
+  category        String   // Spending category
+  icon            String?  // Emoji or icon name
+
+  // Budget allowance
+  monthlyBudget   Float    // How much they can spend guilt-free
+  spent           Float    @default(0) // Current month spending
+
+  // Merchants (for auto-categorization)
+  merchants       String[] // Array of merchant names to match
+
+  // Tracking
+  isActive        Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions    Transaction[]
+
+  @@index([userId, isActive])
+}
+
+// ============================================
+// STREAKS & GAMIFICATION
+// ============================================
+
+model Streak {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Streak type
+  type            String   // 'daily_check', 'savings_deposit', 'budget_adherence', 'debt_payment'
+
+  // Tracking
+  currentStreak   Int      @default(0) // Days
+  longestStreak   Int      @default(0)
+  lastActivity    DateTime?
+
+  // Milestones reached
+  milestonesReached Json   // { "7": true, "30": true, "100": false }
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, type])
+  @@index([userId, currentStreak])
+}
+
+// ============================================
+// PERSONALIZED WIDGETS
+// ============================================
+
+model Widget {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Widget configuration
+  widgetType      String   // 'net_worth', 'savings_progress', 'streak', 'guilty_pleasure', 'bills_due'
+  position        Int      @default(0) // Display order
+
+  // Display settings
+  isVisible       Boolean  @default(true)
+  size            String   @default("medium") // 'small', 'medium', 'large'
+
+  // Custom configuration (JSON)
+  config          Json?    // Widget-specific settings
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, position])
+}
+
+// ============================================
+// SMART NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Notification details
+  type            String   // 'streak', 'bill_reminder', 'overspending', 'suggestion', 'milestone'
+  title           String
+  message         String   @db.Text
+
+  // Action (optional)
+  actionLabel     String?
+  actionUrl       String?
+
+  // Priority & display
+  priority        String   @default("normal") // 'low', 'normal', 'high', 'urgent'
+  category        String   // 'achievement', 'warning', 'info', 'tip'
+
+  // Status
+  isRead          Boolean  @default(false)
+  sentAt          DateTime @default(now())
+  readAt          DateTime?
+
+  createdAt       DateTime @default(now())
+
+  @@index([userId, isRead, sentAt])
+  @@index([userId, type])
+}
+
+// ============================================
+// SPENDING PATTERNS & SUGGESTIONS
+// ============================================
+
+model SpendingPattern {
+  id              String   @id @default(cuid())
+  userId          String
+
+  // Pattern details
+  patternType     String   // 'recurring_subscription', 'overspending', 'unusual_activity', 'savings_opportunity'
+  category        String
+
+  // Detected pattern
+  description     String   @db.Text
+  amount          Float?
+  frequency       String?  // 'daily', 'weekly', 'monthly'
+
+  // Confidence & impact
+  confidence      Float    @default(0.5) // 0.0 - 1.0
+  potentialSavings Float   @default(0)
+
+  // Suggestion
+  suggestion      String?  @db.Text
+  suggestionType  String?  // 'switch_provider', 'reduce_frequency', 'cancel_subscription', 'set_limit'
+
+  // Status
+  status          String   @default("active") // 'active', 'dismissed', 'actioned'
+  userFeedback    String?  // 'helpful', 'not_helpful', 'wrong'
+
+  // Dates
+  detectedAt      DateTime @default(now())
+  firstSeen       DateTime
+  lastSeen        DateTime
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, status, confidence])
+  @@index([patternType, status])
+}
+
+model SmartSuggestion {
+  id              String   @id @default(cuid())
+  userId          String
+
+  // Suggestion details
+  suggestionType  String   // 'better_savings_rate', 'credit_card_points', 'reduce_spending', 'automate_savings'
+  title           String
+  description     String   @db.Text
+
+  // Financial impact
+  potentialSavings Float?
+  timeframe       String?  // 'monthly', 'annually'
+
+  // Priority
+  priority        Int      @default(0) // Higher = more important
+  relevanceScore  Float    @default(0.5) // Based on user's goals
+
+  // Product recommendations (for "two for one deals")
+  productType     String?  // 'savings_account', 'credit_card', 'investment'
+  productDetails  Json?    // Product info, rates, benefits
+
+  // Status
+  status          String   @default("new") // 'new', 'viewed', 'actioned', 'dismissed'
+  userFeedback    String?
+
+  // Display
+  imageUrl        String?
+  actionLabel     String?
+  actionUrl       String?
+
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, status, priority])
+  @@index([suggestionType, status])
 }
