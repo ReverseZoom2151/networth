@@ -53,16 +53,22 @@ export default function SettingsPage() {
       icon: '⚙️',
       items: [
         {
-          label: 'Notifications',
-          description: 'Coming soon - Manage email and push notifications',
-          disabled: true,
-          icon: '🔔',
+          label: 'Region & Location',
+          description: 'Set your location for personalized advice',
+          action: () => router.push('/settings/region'),
+          icon: '🌍',
         },
         {
           label: 'Currency',
           description: 'Change your preferred currency',
           action: () => router.push('/settings/currency'),
           icon: '💱',
+        },
+        {
+          label: 'Notifications',
+          description: 'Coming soon - Manage email and push notifications',
+          disabled: true,
+          icon: '🔔',
         },
       ] as SettingsItem[],
     },
