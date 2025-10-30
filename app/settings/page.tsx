@@ -60,8 +60,8 @@ export default function SettingsPage() {
         },
         {
           label: 'Currency',
-          description: 'Coming soon - Change your preferred currency',
-          disabled: true,
+          description: 'Change your preferred currency',
+          action: () => router.push('/settings/currency'),
           icon: '💱',
         },
       ] as SettingsItem[],

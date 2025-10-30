@@ -80,7 +80,11 @@ export function Navigation() {
             )}
             <button
               onClick={() => router.push('/settings')}
-              className="text-gray-600 hover:text-gray-900 text-sm"
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                pathname === '/settings'
+                  ? 'bg-black text-white'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
             >
               Settings
             </button>
@@ -147,7 +151,11 @@ export function Navigation() {
                   router.push('/settings');
                   setMobileMenuOpen(false);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${
+                  pathname === '/settings'
+                    ? 'bg-black text-white'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
               >
                 Settings
               </button>
