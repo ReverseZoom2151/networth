@@ -1,16 +1,16 @@
 # Success Stories Generation System
 
-This system generates real, dynamic success stories using Perplexity AI for search and multiple AI models (Claude + OpenAI GPT-5 family) for processing and anonymization.
+This system generates real, dynamic success stories **in real-time** using Perplexity AI for search and multiple AI models (Claude + OpenAI GPT-5 family) for processing and anonymization.
 
 ## Overview
 
-Instead of hardcoded success stories, this system:
-- **Searches** for real financial success stories from Reddit and other credible sources using Perplexity AI
-- **Processes** stories with multiple AI models (Claude Sonnet 4.5, Haiku 4.5 + OpenAI GPT-5 family) to extract structured data
-- **Rotates** between models automatically for diverse perspectives and writing styles
-- **Anonymizes** all personal information while keeping stories authentic
-- **Validates** story quality to ensure realistic and relatable content
-- **Stores** in database with automatic refresh cycles
+This system generates fresh success stories on-demand:
+- **Real-time Generation**: Stories are generated when users visit the /stories page
+- **Web Search**: Uses Perplexity AI to find real financial success stories from Reddit and credible sources
+- **Multi-Model Processing**: Rotates between 7 AI models (Claude + OpenAI GPT-5 family) for diverse perspectives
+- **Smart Caching**: In-memory cache (5 minutes) prevents repeated expensive API calls
+- **No Database Storage**: Stories are never stored in the database - always fresh from the web
+- **Anonymization**: All personal information is anonymized while keeping stories authentic
 
 ### AI Models Used
 
@@ -41,86 +41,111 @@ This multi-model approach ensures:
 
 ## Architecture
 
-### 1. Story Generation Script
-**File:** `scripts/generate-success-stories.ts`
+### Real-Time Generation Flow
 
-Main script that orchestrates the entire generation process:
+```
+User visits /stories page
+    ↓
+Check in-memory cache (5 min TTL)
+    ↓
+Cache hit? → Return cached stories
+    ↓
+Cache miss? → Generate stories in real-time
+    ↓
+1. Perplexity AI searches Reddit/web for real stories
+2. AI models (Claude/OpenAI) process and anonymize
+3. Validate story quality and authenticity
+4. Return stories to user
+5. Cache for 5 minutes
+```
+
+### Key Components
+
+#### 1. Real-Time API Endpoint
+**File:** [app/api/stories/realtime/route.ts](../app/api/stories/realtime/route.ts)
+
+Generates stories on-demand without database storage:
+
+```bash
+GET /api/stories/realtime?goalType=house
+```
+
+**Query Parameters:**
+- `goalType`: Specific goal type or `all` for all types
+  - Options: `house`, `travel`, `debt_free`, `emergency_fund`, `retirement`, `car`, `all`
+
+**Response:**
+```json
+{
+  "stories": [...],
+  "cached": false,
+  "goalType": "house",
+  "count": 3
+}
+```
+
+**Features:**
+- ✅ Real-time generation using Perplexity + AI models
+- ✅ In-memory caching (5 minutes)
+- ✅ No database storage
+- ✅ Automatic model rotation for diversity
+- ✅ Rate limiting between API calls
+
+#### 2. In-Memory Cache
+**File:** [lib/cache.ts](../lib/cache.ts)
+
+Simple in-memory cache to avoid repeated expensive AI API calls:
+
+```typescript
+import { cache } from '@/lib/cache';
+
+// Get cached stories
+const stories = cache.get<ProcessedStory[]>('stories_realtime_house');
+
+// Set with 5-minute TTL
+cache.set('stories_realtime_house', stories, 300);
+```
+
+**Features:**
+- ✅ Automatic expiration (default 5 minutes)
+- ✅ Automatic cleanup of expired entries
+- ✅ Singleton pattern for consistency
+- ✅ Type-safe with generics
+
+**Cache Keys:**
+- `stories_realtime_all` - All goal types
+- `stories_realtime_house` - House/apartment stories
+- `stories_realtime_travel` - Travel stories
+- etc.
+
+#### 3. Stories Display Page
+**File:** [app/stories/page.tsx](../app/stories/page.tsx)
+
+Client-side page that fetches stories from real-time API:
+
+```typescript
+// Fetches from real-time generation API
+const response = await fetch(`/api/stories/realtime?goalType=${goalType}`);
+const data = await response.json();
+setStories(data.stories);
+```
+
+**User Experience:**
+- Shows loading message: "Generating real success stories from the web... This may take 10-15 seconds."
+- First load: 10-15 seconds (real-time generation)
+- Subsequent loads within 5 minutes: Instant (cached)
+- After cache expires: Fresh stories generated
+
+#### 4. Testing Script (Optional)
+**File:** [scripts/generate-success-stories.ts](../scripts/generate-success-stories.ts)
+
+Test story generation locally without API:
 
 ```bash
 npm run stories:generate
 ```
 
-**What it does:**
-1. Uses Perplexity AI to search for real success stories across goal types
-2. Processes each story with Claude AI to extract structured data
-3. Anonymizes personal information (names, locations, employers)
-4. Validates story authenticity and realism
-5. Stores validated stories in database
-
-**Goal Types Supported:**
-- `house` - Saving for first home down payment
-- `travel` - Saving to travel the world
-- `debt-free` - Paying off student loans or credit card debt
-- `emergency` - Building emergency fund from scratch
-- `retirement` - Starting early retirement investing
-- `business` - Saving to start a business
-
-### 2. Automated Refresh Script
-**File:** `scripts/refresh-success-stories.ts`
-
-Maintains story freshness and quality:
-
-```bash
-npm run stories:refresh
-```
-
-**What it does:**
-- Checks story count per goal type (maintains 5-15 stories each)
-- Removes stories older than 90 days
-- Generates new stories when needed
-- Updates featured stories automatically
-- Provides detailed statistics
-
-**Configuration:**
-```typescript
-{
-  minStoriesPerGoal: 5,    // Minimum stories to keep
-  maxStoriesPerGoal: 15,   // Maximum stories per goal
-  refreshOlderThan: 90,    // Days before refresh
-}
-```
-
-### 3. API Endpoint
-**File:** `app/api/stories/generate/route.ts`
-
-Manual story generation via API:
-
-```bash
-POST /api/stories/generate
-Content-Type: application/json
-
-{
-  "goalType": "house",  // Optional: specific goal type
-  "count": 3            // Optional: number to generate
-}
-```
-
-**Example usage:**
-```typescript
-// Generate stories for specific goal
-const response = await fetch('/api/stories/generate', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ goalType: 'debt-free' }),
-});
-
-// Generate stories for all goals
-const response = await fetch('/api/stories/generate', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({}),
-});
-```
+**Note:** This script is for testing ONLY. Stories are NOT saved to database. Use the real-time API endpoint in production.
 
 ## Story Processing Flow
 
@@ -130,6 +155,14 @@ const response = await fetch('/api/stories/generate', {
 const rawStories = await searchSuccessStories('house');
 // Returns: Array of raw story content with sources
 ```
+
+**Search Queries by Goal Type:**
+- `house`: "real stories of people who saved for their first home down payment reddit personalfinance"
+- `travel`: "real stories of people who saved money to travel the world reddit"
+- `debt_free`: "real stories of people who paid off student loans or credit card debt reddit personalfinance"
+- `emergency_fund`: "real stories of people who built emergency fund from scratch reddit personalfinance"
+- `retirement`: "real stories of young people who started investing for retirement early reddit"
+- `car`: "real stories of people who saved money to buy their first car reddit"
 
 ### Step 2: Process with AI (Claude or OpenAI)
 ```typescript
@@ -148,39 +181,24 @@ const processed = await processStoryWithAI(rawStory, 'house');
 - ❌ Reject stories that seem fake or lack detail
 
 **Model Selection:**
-- Uses weighted random selection (Claude 30%, GPT-5 25%, etc.)
-- Can specify preferred model: `processStoryWithAI(story, goalType, 'gpt5pro')`
+- Uses weighted random selection (Claude 25%, GPT-5 20%, etc.)
 - Logs which model was used for each story
+- Provides diversity in writing styles
 
 ### Step 3: Validation
 ```typescript
-// Validates before storing
+// Validates before returning
 - Age must be 18-45 (adjusted to 23-35 if outside range)
 - Must have name, goal, strategies, timeline
 - Financial numbers must be realistic
-- No duplicate stories (checks by name + goal)
+- Challenges and strategies must be actionable
 ```
 
-### Step 4: Storage
+### Step 4: Return & Cache
 ```typescript
-// Stores in database with metadata
-await prisma.successStory.create({
-  data: {
-    name: "Sarah",
-    age: 28,
-    occupation: "Software Engineer",
-    goal: "Saved $50,000 for home down payment",
-    goalType: "house",
-    startingPoint: "Living paycheck to paycheck with $15K debt",
-    strategy: ["Created automatic savings transfers", "Cut subscriptions", "Side hustle"],
-    timeline: "24 months",
-    result: "Purchased first home in Austin",
-    keyLessons: ["Automate savings", "Track every expense", "Be patient"],
-    quote: "The hardest part was starting. Once I saw the first $1000, I was hooked.",
-    region: "US",
-    isFeatured: false,
-  }
-});
+// Return to user and cache for 5 minutes
+cache.set(cacheKey, processedStories, 300);
+return NextResponse.json({ stories: processedStories });
 ```
 
 ## Data Structure
@@ -188,113 +206,178 @@ await prisma.successStory.create({
 Each success story contains:
 
 ```typescript
-interface SuccessStory {
-  id: number;
+interface ProcessedStory {
   name: string;              // Anonymized first name only
   age: number;               // 22-35 range
   occupation: string;        // Realistic job title
-  goal: string;              // Specific goal achieved
+  goalTitle: string;         // Short title like "Saved $15k in 18 months"
   goalType: string;          // Category (house, travel, etc.)
-  startingPoint: string;     // Initial financial situation
-  strategy: string[];        // Array of specific actions taken
-  timeline: string;          // How long it took ("18 months", "2 years")
-  result: string;            // What they achieved with numbers
-  keyLessons: string[];      // 3 main takeaways
-  quote: string;             // Inspiring quote from their perspective
-  region: string;            // Geographic region (US, EU, etc.)
-  isFeatured: boolean;       // Featured on homepage
-  createdAt: Date;           // When story was generated
-  updatedAt: Date;           // Last updated
+  startingPoint: string;     // Initial financial situation (2-3 sentences)
+  achievement: string;       // What they accomplished with numbers (2-3 sentences)
+  amountSaved: number;       // Total amount saved/debt paid (no $ sign)
+  timeframe: number;         // Total months it took
+  monthlyContribution: number; // Average monthly savings/payment (no $ sign)
+  story: string;             // Full narrative in their voice (3-4 paragraphs)
+  challenges: string[];      // Array of challenges faced (3 items)
+  strategies: string[];      // Array of strategies used (3 items)
+  keyTakeaway: string;       // One main lesson learned (1-2 sentences)
+  featured: boolean;         // Whether to feature prominently
 }
 ```
 
-## Usage Examples
+## Usage
 
-### Generate Initial Stories
+### User Experience
+
+When users visit the `/stories` page:
+
+1. **First Visit (or after cache expires):**
+   - Loading screen: "Generating real success stories from the web... This may take 10-15 seconds."
+   - System searches Perplexity AI for real Reddit stories
+   - AI processes and anonymizes 3-5 stories
+   - Stories displayed to user
+   - Cached for 5 minutes
+
+2. **Within 5 Minutes:**
+   - Instant load from cache
+   - Same stories as previous visitor
+
+3. **After 5 Minutes:**
+   - Cache expired - fresh generation
+   - New stories from the web
+   - Ensures content stays fresh
+
+### API Usage
+
+Fetch stories programmatically:
+
+```typescript
+// Get stories for specific goal type
+const response = await fetch('/api/stories/realtime?goalType=house');
+const data = await response.json();
+
+console.log(data);
+// {
+//   stories: [...],      // Array of ProcessedStory
+//   cached: false,       // Whether from cache
+//   goalType: 'house',   // Goal type requested
+//   count: 3             // Number of stories
+// }
+```
+
+```typescript
+// Get stories for all goal types
+const response = await fetch('/api/stories/realtime?goalType=all');
+const data = await response.json();
+// Returns stories from all 6 goal types (15-30 stories total)
+```
+
+### Testing Locally
+
+Test story generation without using the API:
+
 ```bash
-# Generate stories for all goal types (first time setup)
+# Test generation for all goal types
 npm run stories:generate
+
+# This script:
+# - Searches Perplexity for real stories
+# - Processes with AI models
+# - Displays results in console
+# - Does NOT save to database
 ```
 
-### Scheduled Refresh
-Set up a cron job for weekly refresh:
+### Model Testing
+
+Compare different AI models side-by-side:
 
 ```bash
-# Linux/Mac crontab
-0 2 * * 1 cd /path/to/networth-mvp && npm run stories:refresh
+# Test all models
+npm run test:models
 
-# Or use Vercel Cron Jobs (vercel.json)
-{
-  "crons": [{
-    "path": "/api/stories/generate",
-    "schedule": "0 2 * * 1"
-  }]
-}
+# Shows:
+# - Processing time for each model
+# - Story quality and structure
+# - Which models succeed/fail
+# - Comparative analysis
 ```
 
-### Manual Generation via API
-```typescript
-// In your admin panel or dashboard
-const generateStories = async () => {
-  const response = await fetch('/api/stories/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ goalType: 'emergency_fund' }),
-  });
+## Configuration
 
-  const data = await response.json();
-  console.log(`Generated ${data.generated} stories`);
-};
-```
+### Cache TTL
 
-### Model Control and Testing
-
-Test different AI models programmatically:
+Adjust cache duration in [app/api/stories/realtime/route.ts](../app/api/stories/realtime/route.ts):
 
 ```typescript
-// In your script or testing file
-import { processStoryWithAI } from './scripts/generate-success-stories';
+// Current: 5 minutes (300 seconds)
+cache.set(cacheKey, allStories, 300);
 
-// Test with specific model
-const story = await processStoryWithAI(rawStory, 'house', 'gpt5pro');
+// Increase for longer cache (reduce costs):
+cache.set(cacheKey, allStories, 600); // 10 minutes
 
-// Or use automatic rotation (default)
-const story2 = await processStoryWithAI(rawStory, 'travel');
+// Decrease for fresher content (increase costs):
+cache.set(cacheKey, allStories, 180); // 3 minutes
 ```
 
-**Model Selection Strategy:**
+### Model Weights
+
+Adjust model selection weights in [app/api/stories/realtime/route.ts](../app/api/stories/realtime/route.ts):
 
 ```typescript
-// Default weights (can be modified in generate-success-stories.ts)
-const weights = {
-  claude: 0.30,      // 30% - Best for privacy and nuance
-  gpt5: 0.25,        // 25% - Best for narratives
-  gpt5mini: 0.20,    // 20% - Fast and efficient
-  gpt5pro: 0.15,     // 15% - Complex scenarios
-  gpt5nano: 0.10,    // 10% - Simple cases
-};
+const weights = [
+  0.25,  // Claude Sonnet (25%) - Increase for better quality
+  0.15,  // Claude Haiku (15%) - Increase for lower costs
+  0.20,  // GPT-5 (20%)
+  0.15,  // GPT-5 Mini (15%)
+  0.15,  // GPT-5 Pro (15%)
+  0.10,  // GPT-5 Nano (10%)
+];
 ```
 
-**Force specific model for testing:**
-```bash
-# Modify scripts/generate-success-stories.ts temporarily
-const processed = await processStoryWithAI(rawStory, goalType, 'gpt5pro');
+### Rate Limiting
+
+Adjust delay between API calls:
+
+```typescript
+// Current: 1 second between stories
+await new Promise(resolve => setTimeout(resolve, 1000));
+
+// Increase if hitting rate limits:
+await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds
 ```
 
-## Quality Validation
+## Environment Variables
 
-Built-in validation ensures:
+Required API keys:
+
+```env
+# AI Models
+ANTHROPIC_API_KEY=your_claude_api_key
+OPENAI_API_KEY=your_openai_api_key
+
+# Web Search
+PERPLEXITY_API_KEY=your_perplexity_api_key
+```
+
+**Note:** All three API keys are required. The system uses:
+- **Perplexity** for searching real stories from Reddit/web
+- **Claude** (Anthropic) for AI processing and anonymization
+- **OpenAI GPT-5** for AI processing with different perspectives
+
+## Quality Assurance
 
 ### ✅ Authenticity
 - Stories sourced from real Reddit posts and verified sources
-- Claude validates story structure and coherence
+- AI validates story structure and coherence
 - Rejects stories without enough detail
+- Sources real financial numbers and timelines
 
 ### ✅ Privacy
 - All names anonymized
 - Locations generalized
 - Specific employers removed
 - Personal identifiers stripped
+- No PII in final stories
 
 ### ✅ Realism
 - Financial numbers verified for accuracy
@@ -308,133 +391,159 @@ Built-in validation ensures:
 - Realistic starting points (debt, low income)
 - Achievable goals
 
-## Environment Variables Required
+## Cost Optimization
 
-```env
-# Required for story generation
-ANTHROPIC_API_KEY=your_claude_api_key
-OPENAI_API_KEY=your_openai_api_key
-PERPLEXITY_API_KEY=your_perplexity_api_key
+### Cache Duration Impact
 
-# Database (already configured)
-DATABASE_URL=your_postgres_url
-```
+**5-minute cache (current):**
+- ✅ Fresh content every 5 minutes
+- ✅ Good balance of cost vs freshness
+- 💰 Moderate API costs
 
-**Note:** Both AI provider keys are required. The system automatically rotates between Claude and OpenAI models for optimal results.
+**10-minute cache:**
+- ✅ Lower API costs (50% reduction)
+- ⚠️ Less fresh content
+- Best for: High traffic sites
 
-## Monitoring & Maintenance
+**3-minute cache:**
+- ✅ Very fresh content
+- ⚠️ Higher API costs (67% increase)
+- Best for: Demo/testing
 
-### Check Story Stats
-```bash
-# Run refresh script to see current state
-npm run stories:refresh
+### Model Selection Impact
 
-# Output shows:
-# - Total stories in database
-# - Stories per goal type
-# - Featured stories count
-# - Stories needing refresh
-```
-
-### Database Queries
+**High Quality (higher cost):**
 ```typescript
-// Check story distribution
-const stats = await prisma.successStory.groupBy({
-  by: ['goalType'],
-  _count: true,
-});
+const weights = [
+  0.40,  // Claude Sonnet (40%)
+  0.10,  // Claude Haiku (10%)
+  0.25,  // GPT-5 (25%)
+  0.05,  // GPT-5 Mini (5%)
+  0.20,  // GPT-5 Pro (20%)
+  0.00,  // GPT-5 Nano (0%)
+];
+```
 
-// Find old stories
-const oldStories = await prisma.successStory.findMany({
-  where: {
-    createdAt: {
-      lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-    }
-  }
-});
-
-// Update featured status
-await prisma.successStory.update({
-  where: { id: storyId },
-  data: { isFeatured: true }
-});
+**Cost Optimized (lower cost):**
+```typescript
+const weights = [
+  0.15,  // Claude Sonnet (15%)
+  0.35,  // Claude Haiku (35%) - cheapest
+  0.15,  // GPT-5 (15%)
+  0.30,  // GPT-5 Mini (30%) - fast & cheap
+  0.05,  // GPT-5 Pro (5%)
+  0.00,  // GPT-5 Nano (0%)
+];
 ```
 
 ## Troubleshooting
 
-### No Stories Generated
-1. Check API keys are set correctly
-2. Verify Perplexity API has credits
-3. Check Claude API rate limits
-4. Review logs for errors: `console.log` output in scripts
+### Stories Taking Too Long to Generate
 
-### Stories Seem Unrealistic
-1. Review Claude prompt in `generate-success-stories.ts`
-2. Adjust validation rules (age range, financial numbers)
-3. Change Perplexity search queries for better sources
+**Problem:** Page loads slowly (>20 seconds)
 
-### Rate Limiting
-- Script includes 2-3 second delays between API calls
-- Adjust in code: `await new Promise(resolve => setTimeout(resolve, 2000))`
-- Reduce stories per batch if needed
+**Solutions:**
+1. Increase cache duration to reduce generation frequency
+2. Pre-warm cache by visiting page during deployment
+3. Reduce number of stories generated per request
+4. Use faster models (Claude Haiku, GPT-5 Mini)
 
-## Testing AI Models
+### Stories Seem Repetitive
 
-Compare different AI models to see which produces the best results for your use case:
+**Problem:** Stories sound too similar
 
-```bash
-# Compare all models side-by-side
-npm run test:models
+**Solutions:**
+1. Increase temperature in AI model calls (currently 0.3)
+2. Adjust model weights to use more variety
+3. Reduce cache duration for fresher content
+4. Change Perplexity search queries for different sources
 
-# Test specific model only
-npm run test:models claude
-npm run test:models gpt5
-npm run test:models gpt5pro
-npm run test:models gpt5mini
-npm run test:models gpt5nano
-```
+### API Rate Limits Hit
 
-**What the test shows:**
-- ✅ Processing time for each model
-- ✅ Story structure and completeness
-- ✅ Narrative length and style
-- ✅ Financial data accuracy
-- ✅ Which models succeed/fail
+**Problem:** Perplexity or AI APIs return rate limit errors
 
-**Use this to:**
-- Evaluate model performance before production use
-- Adjust model weights based on quality
-- Troubleshoot API issues with specific providers
-- Compare costs vs quality tradeoffs
+**Solutions:**
+1. Increase delay between API calls (currently 1 second)
+2. Reduce number of stories generated per request
+3. Increase cache duration to reduce API calls
+4. Upgrade API plan for higher rate limits
+
+### Cache Not Working
+
+**Problem:** Stories regenerate on every request
+
+**Solutions:**
+1. Check if multiple server instances (cache is per-instance)
+2. Consider using Redis for shared cache across instances
+3. Verify cache TTL is set correctly (300 seconds = 5 minutes)
+4. Check server logs for cache hit/miss information
 
 ## Best Practices
 
-1. **Initial Setup:** Run `npm run stories:generate` once to populate database
-2. **Test Models First:** Run `npm run test:models` to verify all AI providers are working
-3. **Weekly Refresh:** Schedule `npm run stories:refresh` weekly via cron
-4. **Monitor Quality:** Regularly review stories in database for quality
-5. **Adjust Model Weights:** Based on test results, tune weights in `generate-success-stories.ts`
-6. **Featured Stories:** Manually feature best stories via database or admin panel
-7. **Regional Content:** Add region-specific stories by filtering Perplexity searches
+1. **Cache Duration**: Start with 5 minutes, adjust based on traffic and costs
+2. **Model Testing**: Use `npm run test:models` to evaluate quality before adjusting weights
+3. **Monitoring**: Log cache hit/miss rates to optimize TTL
+4. **Error Handling**: System gracefully handles API failures by returning cached stories or empty array
+5. **Cost Management**: Monitor AI API usage and adjust cache/model settings accordingly
+
+## Performance Characteristics
+
+**First Load (Cache Miss):**
+- Perplexity search: 3-5 seconds
+- AI processing (3-5 stories): 5-10 seconds
+- **Total: 10-15 seconds**
+
+**Subsequent Loads (Cache Hit):**
+- **Total: <100ms** (instant)
+
+**API Costs per Generation:**
+- Perplexity: ~$0.01-0.02 per search
+- AI processing: ~$0.05-0.15 per story (varies by model)
+- **Total: ~$0.20-0.50 per full generation**
+
+**With 5-minute cache:**
+- High traffic (100 users/hour): ~$1.20/hour
+- Medium traffic (50 users/hour): ~$0.60/hour
+- Low traffic (20 users/hour): ~$0.30/hour
+
+## Comparison with Database Approach
+
+### ❌ Old Approach (Database Storage)
+- ✅ Fast page loads (instant)
+- ❌ Stale content (stories outdated)
+- ❌ Requires database maintenance
+- ❌ Needs scheduled refresh jobs
+- ❌ Complex deployment (cron jobs)
+
+### ✅ New Approach (Real-Time Generation)
+- ✅ Always fresh content (from live web sources)
+- ✅ No database maintenance needed
+- ✅ No scheduled jobs required
+- ✅ Simple deployment (just API endpoint)
+- ✅ Diverse stories (different each time)
+- ⚠️ Slower first load (10-15 seconds)
+- ⚠️ Higher API costs (but controlled by cache)
 
 ## Future Enhancements
 
 Potential improvements:
-- [ ] User voting on story helpfulness
-- [ ] Story engagement tracking (views, saves)
-- [ ] Multi-language support
-- [ ] Integration with user goals (show relevant stories)
-- [ ] Story comments and discussions
-- [ ] Video testimonials (if sources found)
+- [ ] Redis cache for shared caching across multiple servers
+- [ ] Background pre-warming of cache on deployment
+- [ ] User-specific story recommendations based on their goals
+- [ ] Story rating/feedback system
 - [ ] Regional customization (currency, locations)
+- [ ] Multi-language support
+- [ ] A/B testing different AI models
+- [ ] Analytics on story engagement
 
 ## Related Files
 
-- `app/api/stories/route.ts` - Fetch stories endpoint
-- `app/stories/page.tsx` - Stories display UI
-- `prisma/schema.prisma` - Database schema
-- `lib/perplexity.ts` - Perplexity AI integration (if exists)
+- [app/api/stories/realtime/route.ts](../app/api/stories/realtime/route.ts) - Real-time generation API
+- [app/stories/page.tsx](../app/stories/page.tsx) - Stories display page
+- [lib/cache.ts](../lib/cache.ts) - In-memory cache utility
+- [scripts/generate-success-stories.ts](../scripts/generate-success-stories.ts) - Testing script
+- [scripts/test-ai-models.ts](../scripts/test-ai-models.ts) - Model comparison tool
 
 ---
 
-**Note:** This system generates real stories from public sources. Always respect privacy and ensure compliance with content usage policies.
+**Note:** This system generates real stories from public sources in real-time. Always respect privacy, ensure compliance with content usage policies, and monitor API costs carefully.

@@ -44,37 +44,37 @@ export default function NewsPage() {
         <div className="mb-8 animate-fade-in">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-3">
-              Financial News That Matters
+              Real-Time Financial News
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              We translate complex financial news into personal impact for your goals.
-              No jargon, just what it means for you.
+              Fresh financial news from the web, personalized for your goals.
+              Select your timeframe to see what's happening now.
             </p>
           </div>
 
           {/* Info Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <Card className="p-5 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-              <div className="text-3xl mb-2">🎯</div>
-              <h3 className="font-semibold text-gray-900 mb-1">Personalized</h3>
+              <div className="text-3xl mb-2">⚡</div>
+              <h3 className="font-semibold text-gray-900 mb-1">Real-Time</h3>
               <p className="text-sm text-gray-600">
-                Only see news that affects your specific goals
+                Fresh news from the web, updated every time you visit
               </p>
             </Card>
 
             <Card className="p-5 text-center bg-gradient-to-br from-green-50 to-emerald-50">
-              <div className="text-3xl mb-2">💡</div>
-              <h3 className="font-semibold text-gray-900 mb-1">Clear Impact</h3>
+              <div className="text-3xl mb-2">🎯</div>
+              <h3 className="font-semibold text-gray-900 mb-1">Personalized</h3>
               <p className="text-sm text-gray-600">
-                Understand exactly how news affects your finances
+                Filtered for your specific goal and region
               </p>
             </Card>
 
             <Card className="p-5 text-center bg-gradient-to-br from-purple-50 to-pink-50">
-              <div className="text-3xl mb-2">⚡</div>
-              <h3 className="font-semibold text-gray-900 mb-1">Quick Actions</h3>
+              <div className="text-3xl mb-2">📅</div>
+              <h3 className="font-semibold text-gray-900 mb-1">Flexible Timeline</h3>
               <p className="text-sm text-gray-600">
-                Take action immediately when opportunities arise
+                View news from the last hour to last 3 months
               </p>
             </Card>
           </div>

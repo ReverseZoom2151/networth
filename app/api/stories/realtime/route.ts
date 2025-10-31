@@ -1,9 +1,7 @@
-// Generate real success stories from Reddit and web sources
-// Uses Perplexity AI for search and Claude/OpenAI for processing
-// NOTE: This script is for testing only. Stories are generated in real-time via API endpoint.
-
+import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
+import { cache } from '@/lib/cache';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -17,14 +15,14 @@ const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 // Available AI models for story processing
 const AI_MODELS = {
   // Claude Models (Anthropic)
-  claude: 'claude-sonnet-4-5-20250929',      // Main: Best quality, balanced cost
-  claudeHaiku: 'claude-haiku-4-5-20251001',  // Fast: Cheapest, fastest
-  claudeOpus: 'claude-opus-4-1-20250805',    // Premium: Most capable, highest cost
+  claude: 'claude-sonnet-4-5-20250929',
+  claudeHaiku: 'claude-haiku-4-5-20251001',
+  claudeOpus: 'claude-opus-4-1-20250805',
   // OpenAI GPT-5 Models
-  gpt5: 'gpt-5-2025-08-07',                  // Main: Strong narratives
-  gpt5mini: 'gpt-5-mini-2025-08-07',         // Fast: Efficient
-  gpt5pro: 'gpt-5-pro-2025-10-06',           // Premium: Advanced reasoning
-  gpt5nano: 'gpt-5-nano-2025-08-07',         // Lightest: Simple cases
+  gpt5: 'gpt-5-2025-08-07',
+  gpt5mini: 'gpt-5-mini-2025-08-07',
+  gpt5pro: 'gpt-5-pro-2025-10-06',
+  gpt5nano: 'gpt-5-nano-2025-08-07',
 } as const;
 
 type AIModel = keyof typeof AI_MODELS;
@@ -44,9 +42,9 @@ interface ProcessedStory {
   startingPoint: string;
   achievement: string;
   amountSaved: number;
-  timeframe: number; // months
+  timeframe: number;
   monthlyContribution: number;
-  story: string; // full narrative
+  story: string;
   challenges: string[];
   strategies: string[];
   keyTakeaway: string;
@@ -99,7 +97,6 @@ async function searchSuccessStories(goalType: string): Promise<RawStory[]> {
     const data = await response.json();
     const content = data.choices[0].message.content;
 
-    // Parse the response to extract individual stories
     const stories: RawStory[] = [];
     const sections = content.split(/\n\n(?=\d+\.|Story \d+|###)/);
 
@@ -120,17 +117,11 @@ async function searchSuccessStories(goalType: string): Promise<RawStory[]> {
   }
 }
 
-/**
- * Extract URL from text
- */
 function extractUrl(text: string): string | undefined {
   const urlMatch = text.match(/https?:\/\/[^\s]+/);
   return urlMatch ? urlMatch[0] : undefined;
 }
 
-/**
- * Get the prompt for story processing
- */
 function getStoryProcessingPrompt(rawStory: RawStory, goalType: string): string {
   return `Analyze this real financial success story and convert it into a structured, anonymized format.
 
@@ -169,9 +160,6 @@ Return a JSON object with this exact structure:
 If the story is not credible or doesn't have enough detail, respond with just: null`;
 }
 
-/**
- * Process story using Claude AI
- */
 async function processWithClaude(
   rawStory: RawStory,
   goalType: string,
@@ -192,9 +180,6 @@ async function processWithClaude(
   return message.content[0].type === 'text' ? message.content[0].text : '';
 }
 
-/**
- * Process story using OpenAI GPT-5 models
- */
 async function processWithOpenAI(
   rawStory: RawStory,
   goalType: string,
@@ -219,54 +204,43 @@ async function processWithOpenAI(
   return completion.choices[0].message.content || '';
 }
 
-/**
- * Process and anonymize story using AI (Claude or OpenAI)
- * Rotates between different models for diversity
- */
 async function processStoryWithAI(
   rawStory: RawStory,
   goalType: string,
   preferredModel?: AIModel
 ): Promise<ProcessedStory | null> {
   try {
-    // Rotate through models if not specified
     const model = preferredModel || selectRandomModel();
-    console.log(`      Using ${model} model...`);
+    console.log(`Processing with ${model} model...`);
 
     let responseText: string;
 
-    // Check if it's a Claude model or OpenAI model
     if (model === 'claude' || model === 'claudeHaiku' || model === 'claudeOpus') {
       responseText = await processWithClaude(rawStory, goalType, model);
     } else {
       responseText = await processWithOpenAI(rawStory, goalType, model);
     }
 
-    // Extract JSON from response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.log(`      No valid JSON found in ${model} response`);
       return null;
     }
 
     const processed = JSON.parse(jsonMatch[0]);
 
-    // Validation
     if (!processed || processed === 'null' || !processed.name || !processed.age) {
       return null;
     }
 
-    // Additional validation
     if (processed.age < 18 || processed.age > 45) {
-      processed.age = Math.floor(Math.random() * 13) + 23; // 23-35
+      processed.age = Math.floor(Math.random() * 13) + 23;
     }
 
-    // Validate numeric fields
     if (!processed.amountSaved || processed.amountSaved < 0) {
-      processed.amountSaved = 5000; // Default
+      processed.amountSaved = 5000;
     }
     if (!processed.timeframe || processed.timeframe < 1) {
-      processed.timeframe = 12; // Default 1 year
+      processed.timeframe = 12;
     }
     if (!processed.monthlyContribution || processed.monthlyContribution < 0) {
       processed.monthlyContribution = Math.floor(processed.amountSaved / processed.timeframe);
@@ -274,32 +248,28 @@ async function processStoryWithAI(
 
     return processed;
   } catch (error) {
-    console.error(`      Error processing with AI:`, error);
+    console.error('Error processing with AI:', error);
     return null;
   }
 }
 
-/**
- * Randomly select an AI model for diversity
- */
 function selectRandomModel(): AIModel {
   const models: AIModel[] = [
-    'claude',       // Claude Sonnet 4.5 - Main model
-    'claudeHaiku',  // Claude Haiku 4.5 - Fast & cheap
-    'gpt5',         // GPT-5 - Strong narratives
-    'gpt5mini',     // GPT-5 Mini - Efficient
-    'gpt5pro',      // GPT-5 Pro - Advanced
-    'gpt5nano',     // GPT-5 Nano - Lightweight
+    'claude',
+    'claudeHaiku',
+    'gpt5',
+    'gpt5mini',
+    'gpt5pro',
+    'gpt5nano',
   ];
 
-  // Weights: Balanced between quality and cost
   const weights = [
-    0.25,  // Claude Sonnet (25%) - Best quality/cost balance
-    0.15,  // Claude Haiku (15%) - Fast generation
-    0.20,  // GPT-5 (20%) - Strong narratives
-    0.15,  // GPT-5 Mini (15%) - Efficient
-    0.15,  // GPT-5 Pro (15%) - Complex scenarios
-    0.10,  // GPT-5 Nano (10%) - Simple cases
+    0.25,  // Claude Sonnet
+    0.15,  // Claude Haiku
+    0.20,  // GPT-5
+    0.15,  // GPT-5 Mini
+    0.15,  // GPT-5 Pro
+    0.10,  // GPT-5 Nano
   ];
 
   const random = Math.random();
@@ -312,80 +282,91 @@ function selectRandomModel(): AIModel {
     }
   }
 
-  return 'claude'; // Fallback to main Claude model
+  return 'claude';
 }
 
 /**
- * Display processed story (for testing purposes)
+ * Generate stories for a goal type in real-time
+ * No database storage - uses in-memory cache only
  */
-function displayStory(story: ProcessedStory): void {
-  console.log(`\n✅ Generated story: ${story.name} - ${story.goalTitle}`);
-  console.log(`   Age: ${story.age} | Occupation: ${story.occupation}`);
-  console.log(`   Amount: $${story.amountSaved} | Timeframe: ${story.timeframe} months`);
-  console.log(`   Key Takeaway: ${story.keyTakeaway.substring(0, 80)}...`);
-}
+async function generateStoriesRealtime(goalType: string): Promise<ProcessedStory[]> {
+  console.log(`Generating real-time stories for: ${goalType}`);
 
-/**
- * Generate success stories for a specific goal type (for testing purposes)
- */
-async function generateStoriesForGoalType(goalType: string): Promise<number> {
-  console.log(`\n📖 Generating stories for: ${goalType}`);
-
-  // Search for stories
   const rawStories = await searchSuccessStories(goalType);
-  console.log(`   Found ${rawStories.length} raw stories`);
+  console.log(`Found ${rawStories.length} raw stories`);
 
-  let generatedCount = 0;
+  const processedStories: ProcessedStory[] = [];
 
-  // Process each story with AI (Claude or OpenAI)
   for (const rawStory of rawStories) {
-    console.log(`   Processing story...`);
     const processed = await processStoryWithAI(rawStory, goalType);
 
     if (processed) {
-      displayStory(processed);
-      generatedCount++;
+      processedStories.push(processed);
     }
 
-    // Rate limiting
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Rate limiting between AI calls
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  console.log(`   ✅ Generated ${generatedCount} stories for ${goalType}`);
-  return generatedCount;
+  console.log(`Generated ${processedStories.length} stories`);
+  return processedStories;
 }
 
 /**
- * Main function - test story generation for all goal types
- * NOTE: Stories are NOT stored in the database. They are generated in real-time via API.
+ * API endpoint for real-time story generation
+ * GET /api/stories/realtime?goalType=house
  */
-async function main() {
-  console.log('🚀 Testing success story generation (no database storage)...\n');
-  console.log('ℹ️  Stories are generated in real-time via /api/stories/realtime endpoint\n');
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const goalType = searchParams.get('goalType') || 'all';
 
-  const goalTypes = ['house', 'travel', 'debt_free', 'emergency_fund', 'retirement', 'car'];
-  let totalGenerated = 0;
+    // Check cache first
+    const cacheKey = `stories_realtime_${goalType}`;
+    const cachedStories = cache.get<ProcessedStory[]>(cacheKey);
 
-  for (const goalType of goalTypes) {
-    try {
-      const count = await generateStoriesForGoalType(goalType);
-      totalGenerated += count;
-    } catch (error) {
-      console.error(`Error generating stories for ${goalType}:`, error);
+    if (cachedStories) {
+      console.log(`Returning cached stories for ${goalType}`);
+      return NextResponse.json({
+        stories: cachedStories,
+        cached: true,
+        goalType,
+      });
     }
+
+    // Generate stories in real-time
+    let allStories: ProcessedStory[] = [];
+
+    if (goalType === 'all') {
+      // Generate stories for all goal types
+      const goalTypes = ['house', 'travel', 'debt_free', 'emergency_fund', 'retirement', 'car'];
+
+      for (const type of goalTypes) {
+        const stories = await generateStoriesRealtime(type);
+        allStories = allStories.concat(stories);
+      }
+    } else {
+      // Generate for specific goal type
+      allStories = await generateStoriesRealtime(goalType);
+    }
+
+    // Cache for 5 minutes (300 seconds)
+    cache.set(cacheKey, allStories, 300);
+
+    return NextResponse.json({
+      stories: allStories,
+      cached: false,
+      goalType,
+      count: allStories.length,
+    });
+  } catch (error) {
+    console.error('Error generating stories:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to generate stories',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
-
-  console.log(`\n✨ Generation test complete! Total stories generated: ${totalGenerated}`);
-  console.log('📝 These stories were NOT saved to the database');
-  console.log('🔄 Visit /stories page to generate stories in real-time with caching');
 }
-
-// Run if called directly
-if (require.main === module) {
-  main().catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
-}
-
-export { generateStoriesForGoalType, processStoryWithAI, selectRandomModel, AI_MODELS };

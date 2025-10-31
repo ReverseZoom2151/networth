@@ -42,14 +42,28 @@ export default function StoriesPage() {
   const fetchStories = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (filterGoalType !== 'all') params.append('goalType', filterGoalType);
-      if (filterRegion !== 'all') params.append('region', filterRegion);
 
-      const response = await fetch(`/api/stories?${params}`);
+      // Use real-time generation API
+      const goalType = filterGoalType === 'all' ? 'all' : filterGoalType;
+      const response = await fetch(`/api/stories/realtime?goalType=${goalType}`);
+
       if (response.ok) {
         const data = await response.json();
-        setStories(data);
+        let fetchedStories = (data.stories || []).map((story: any, index: number) => ({
+          ...story,
+          id: `story-${goalType}-${index}-${Date.now()}`, // Generate unique ID
+          region: story.region || 'US', // Default region
+          inspirationScore: 0, // Default score
+        }));
+
+        // Apply region filter on client side if needed
+        if (filterRegion !== 'all') {
+          fetchedStories = fetchedStories.filter(
+            (story: SuccessStory) => story.region === filterRegion
+          );
+        }
+
+        setStories(fetchedStories);
       }
     } catch (error) {
       console.error('Failed to fetch stories:', error);
@@ -64,7 +78,9 @@ export default function StoriesPage() {
   };
 
   if (loading) {
-    return <LoadingScreen message="Loading success stories..." />;
+    return (
+      <LoadingScreen message="Generating real success stories from the web... This may take 10-15 seconds." />
+    );
   }
 
   return (

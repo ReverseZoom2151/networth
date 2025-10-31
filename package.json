@@ -61,7 +61,8 @@
     "openai": "^6.7.0",
     "prisma": "^6.18.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "rss-parser": "^3.13.0"
   },
   "devDependencies": {
     "@types/estree": "^1.0.8",
