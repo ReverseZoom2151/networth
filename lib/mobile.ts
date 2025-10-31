@@ -2,7 +2,7 @@
 // This module provides mobile-native capabilities with web fallbacks
 
 import { Capacitor } from '@capacitor/core';
-import { isMobile, isIOS, isAndroid } from './platform';
+import { isMobile, isAndroid } from './platform';
 
 /**
  * Haptic Feedback
