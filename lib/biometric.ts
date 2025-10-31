@@ -33,7 +33,7 @@ export const getBiometricType = async (): Promise<string | null> => {
     if (!result.isAvailable) return null;
 
     // Return biometry type (faceId, touchId, fingerprint, etc.)
-    return result.biometryType || null;
+    return result.biometryType ? String(result.biometryType) : null;
   } catch (error) {
     console.error('Failed to get biometric type:', error);
     return null;
