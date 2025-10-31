@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui';
 import { formatDistanceToNow } from 'date-fns';
+import { ShareButton } from '@/components/ShareButton';
 
 interface NewsImpact {
   id: string;
@@ -217,6 +218,14 @@ export default function NewsImpactCard({
               {expanded ? 'Show Less' : 'Read More'}
             </button>
           )}
+
+          {/* Share */}
+          <ShareButton
+            title={news.title}
+            text={news.summary}
+            url={news.sourceUrl || undefined}
+            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          />
 
           {/* Dismiss */}
           {onDismiss && (

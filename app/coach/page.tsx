@@ -6,6 +6,7 @@ import { UserGoal, Message } from '@/lib/types';
 import { useWhop, UserStorage } from '@/app/providers';
 import { Navigation } from '@/components/Navigation';
 import { LockedFeature } from '@/components/SubscriptionGate';
+import { haptics } from '@/lib/mobile';
 
 export default function CoachPage() {
   const router = useRouter();
@@ -40,6 +41,9 @@ export default function CoachPage() {
   const sendMessage = async () => {
     if (!inputMessage.trim() || !goal || sending) return;
 
+    // Haptic feedback when sending message
+    await haptics.light();
+
     const userMessage: Message = {
       role: 'user',
       content: inputMessage,
@@ -70,6 +74,8 @@ export default function CoachPage() {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, aiMessage]);
+        // Success haptic when response received
+        await haptics.success();
       } else {
         throw new Error('Failed to get response');
       }
@@ -81,6 +87,8 @@ export default function CoachPage() {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
+      // Error haptic on failure
+      await haptics.error();
     } finally {
       setSending(false);
     }

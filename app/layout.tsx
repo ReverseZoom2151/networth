@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { WhopProvider } from "./providers";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 export const metadata: Metadata = {
   title: "Networth",
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <WhopProvider>
+          <OfflineIndicator />
           {children}
         </WhopProvider>
       </body>
