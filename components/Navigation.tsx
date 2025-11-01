@@ -10,7 +10,7 @@ export function Navigation() {
   const { hasAccess } = useWhop();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navigation = [
+  const navigation: Array<{name: string; href: string; icon: string; premium?: boolean}> = [
     { name: 'Home', href: '/dashboard', icon: '🏠' },
     { name: 'Goals', href: '/goals', icon: '🎯' },
     { name: 'AI Assistant', href: '/ai', icon: '🤖' },

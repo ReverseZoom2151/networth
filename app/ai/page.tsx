@@ -7,6 +7,7 @@ import { useWhop, UserStorage } from '@/app/providers';
 import { Navigation } from '@/components/Navigation';
 import { Card } from '@/components/ui';
 import { haptics } from '@/lib/mobile';
+import { VoiceAgent } from '@/components/ai/VoiceAgent';
 
 // All available AI models
 const AI_MODELS = {
@@ -96,6 +97,9 @@ export default function AIPage() {
   const [selectedModel, setSelectedModel] = useState<ModelKey>('claude-sonnet');
   const [deepResearch, setDeepResearch] = useState(false);
   const [research, setResearch] = useState<ResearchResult | null>(null);
+
+  // Voice mode
+  const [voiceMode, setVoiceMode] = useState(false);
 
   useEffect(() => {
     async function initAI() {
@@ -221,11 +225,14 @@ export default function AIPage() {
               <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Financial Assistant</h1>
               <p className="text-gray-700 mb-3">
                 Get personalized advice and comprehensive research powered by the latest AI models.
-                Choose between Claude and GPT-5, enable deep research for multi-source insights.
+                Choose between Claude and GPT-5, enable deep research, or have voice conversations.
               </p>
               <div className="flex flex-wrap gap-2">
                 <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 shadow-sm">
                   ✓ 7 AI models
+                </span>
+                <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 shadow-sm">
+                  ✓ Voice conversations
                 </span>
                 <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 shadow-sm">
                   ✓ Financial calculators
@@ -243,7 +250,7 @@ export default function AIPage() {
 
         {/* Model Selection & Controls */}
         <Card className="p-5 mb-6 border-gray-200">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Model Selector */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -290,6 +297,7 @@ export default function AIPage() {
                     ? 'bg-purple-600 text-white hover:bg-purple-700'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
                 }`}
+                disabled={voiceMode}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -311,13 +319,56 @@ export default function AIPage() {
                 {deepResearch ? 'Multi-source research with citations' : 'Fast conversational responses'}
               </p>
             </div>
+
+            {/* Voice Mode Toggle */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Interaction Mode
+              </label>
+              <button
+                onClick={() => setVoiceMode(!voiceMode)}
+                className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all shadow-sm ${
+                  voiceMode
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-lg">{voiceMode ? '🎤' : '⌨️'}</span>
+                    <span>{voiceMode ? 'Voice Mode' : 'Text Mode'}</span>
+                  </div>
+                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                    voiceMode ? 'bg-green-400' : 'bg-gray-400'
+                  }`}>
+                    <span
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                        voiceMode ? 'translate-x-5' : 'translate-x-1'
+                      }`}
+                    />
+                  </div>
+                </div>
+              </button>
+              <p className="text-xs text-gray-500 mt-1">
+                {voiceMode ? 'Real-time voice conversation' : 'Type your questions'}
+              </p>
+            </div>
           </div>
         </Card>
 
-        {/* Chat Container */}
-        <Card className="flex-1 overflow-hidden flex flex-col border-gray-200 shadow-lg">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+        {/* Voice Mode or Text Chat */}
+        {voiceMode ? (
+          <VoiceAgent
+            userId={userId || undefined}
+            goalType={goal?.type}
+            region={goal?.region}
+            onClose={() => setVoiceMode(false)}
+          />
+        ) : (
+          /* Chat Container */
+          <Card className="flex-1 overflow-hidden flex flex-col border-gray-200 shadow-lg">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center py-12">
                 <div className="text-7xl mb-6 animate-pulse">
@@ -467,6 +518,7 @@ export default function AIPage() {
             </div>
           </div>
         </Card>
+        )}
       </main>
     </div>
   );

@@ -203,7 +203,7 @@ async function fetchFromPerplexity(
     const articles: NewsArticle[] = [];
     const sections = content.split(/\n\n(?=\d+\.|\*\*|###)/);
 
-    sections.forEach((section, index) => {
+    sections.forEach((section: string, index: number) => {
       if (section.trim().length > 100) {
         const titleMatch = section.match(/(?:\d+\.\s*)?(?:\*\*)?([^\n*]+?)(?:\*\*)?[\n:]/);
         const title = titleMatch ? titleMatch[1].trim() : `Financial News ${index + 1}`;

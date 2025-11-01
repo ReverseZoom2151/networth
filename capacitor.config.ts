@@ -28,11 +28,12 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
 
-    // Keyboard configuration
-    Keyboard: {
-      resize: 'body',
-      style: 'dark',
-      resizeOnFullScreen: true,
+    // Audio/Microphone permissions for Voice Agent
+    // Note: Actual permissions are configured in native projects:
+    // - iOS: Info.plist (NSMicrophoneUsageDescription)
+    // - Android: AndroidManifest.xml (RECORD_AUDIO, MODIFY_AUDIO_SETTINGS)
+    CapacitorHttp: {
+      enabled: true,
     },
   },
 

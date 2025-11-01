@@ -14,6 +14,20 @@ import {
   calculateLoanPayment,
   calculateCompoundInterest,
 } from '@/lib/calculations';
+import { runCoachAgent, runResearchAgent, runCalculatorAgent } from '@/lib/agents';
+import {
+  validateInput,
+  validateOutput,
+  checkRateLimit,
+  requiresDisclaimer,
+} from '@/lib/guardrails';
+import {
+  startTrace,
+  addTraceEvent,
+  endTrace,
+  traceError,
+  evaluateResponse,
+} from '@/lib/tracing';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -157,8 +171,11 @@ function executeToolCall(toolName: string, toolInput: any): any {
   }
 }
 
-// Main API handler
+// Main API handler with OpenAI Agents SDK integration
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  let traceId: string | undefined;
+
   try {
     const body = await request.json();
     const {
@@ -169,6 +186,7 @@ export async function POST(request: NextRequest) {
       goal,
       history,
       userId,
+      useAgentsSDK = true, // New flag to enable/disable SDK
     } = body as {
       message: string;
       model: string;
@@ -177,6 +195,7 @@ export async function POST(request: NextRequest) {
       goal: UserGoal;
       history: Message[];
       userId?: string;
+      useAgentsSDK?: boolean;
     };
 
     if (!message || !goal || !model) {
@@ -186,53 +205,280 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // RAG Phase 1: Fetch user's financial context
-    let financialContext = null;
-    if (userId) {
-      financialContext = await getUserFinancialContext(userId);
-    }
+    // ========================================================================
+    // PHASE 0: START TRACING
+    // ========================================================================
 
-    // RAG Phase 2: Search knowledge base
-    const relevantKnowledge = await searchKnowledge(message, {
-      limit: 3,
+    traceId = startTrace({
+      userId,
+      message,
+      goalType: goal.type,
       region: goal.region,
-      minSimilarity: 0.75,
+      deepResearch,
+      model,
     });
 
-    // Phase 3: Deep Research (optional)
-    let researchData = null;
-    if (deepResearch && isPerplexityAvailable()) {
-      try {
-        researchData = await performDeepResearch(message, goal.type, goal.region);
-      } catch (error) {
-        console.error('Deep research failed:', error);
-        // Continue without research if it fails
+    // ========================================================================
+    // PHASE 1: INPUT VALIDATION & GUARDRAILS
+    // ========================================================================
+
+    const inputValidation = validateInput({
+      message,
+      userId,
+      goalType: goal.type,
+      region: goal.region,
+      deepResearch,
+      model,
+    });
+
+    if (!inputValidation.valid) {
+      console.log('[AI Query] ❌ Input validation failed:', inputValidation.error);
+      addTraceEvent(traceId, 'validation_fail', {
+        phase: 'input',
+        error: inputValidation.error,
+      });
+      return NextResponse.json(
+        { error: inputValidation.error },
+        { status: 400 }
+      );
+    }
+
+    // Check rate limits
+    if (userId) {
+      const rateLimitCheck = checkRateLimit(userId, 20, 60000); // 20 requests per minute
+      if (!rateLimitCheck.allowed) {
+        console.log(`[AI Query] 🚫 Rate limit exceeded for user: ${userId}`);
+        addTraceEvent(traceId, 'rate_limit', {
+          userId,
+          resetIn: rateLimitCheck.resetIn,
+        });
+        return NextResponse.json(
+          {
+            error: 'Rate limit exceeded',
+            message: `Please wait ${Math.ceil((rateLimitCheck.resetIn || 0) / 1000)} seconds before trying again`,
+          },
+          { status: 429 }
+        );
       }
     }
 
-    // Build system prompt
-    const systemPrompt = buildSystemPrompt(goal, financialContext, relevantKnowledge, researchData);
+    console.log(`[AI Query] ✅ Input validated. Warnings:`, inputValidation.warnings);
 
-    // Get response based on model category
+    // ========================================================================
+    // PHASE 2: ROUTE TO APPROPRIATE AGENT OR LEGACY PATH
+    // ========================================================================
+
     let response: string;
-    if (modelCategory === 'claude') {
-      response = await getClaudeResponse(model, systemPrompt, message, history);
+    let researchData = null;
+    let agentUsed = 'legacy';
+
+    // Use OpenAI Agents SDK if enabled and model supports it
+    if (useAgentsSDK && modelCategory === 'openai') {
+      console.log('[AI Query] 🤖 Using OpenAI Agents SDK');
+
+      // Determine which agent to use based on query
+      if (deepResearch) {
+        // Use research agent for deep research queries
+        console.log('[AI Query] 📚 Routing to Research Agent');
+        addTraceEvent(traceId, 'agent_start', { agent: 'research' });
+
+        const result = await runResearchAgent({
+          topic: message,
+          goalType: goal.type,
+          region: goal.region,
+        });
+
+        response = (result.finalOutput || 'No response generated') as string;
+        agentUsed = 'research';
+        addTraceEvent(traceId, 'agent_end', { agent: 'research' });
+      } else if (isCalculationQuery(message)) {
+        // Use calculator agent for calculation-heavy queries
+        console.log('[AI Query] 🔢 Routing to Calculator Agent');
+        addTraceEvent(traceId, 'agent_start', { agent: 'calculator' });
+
+        const regionConfig = getRegionConfig(goal.region);
+        const context = `Goal: Save ${regionConfig.currencySymbol}${goal.targetAmount?.toLocaleString() || 'amount'} in ${goal.timeframe || 'X'} months. Current savings: ${regionConfig.currencySymbol}${goal.currentSavings?.toLocaleString() || '0'}`;
+
+        const result = await runCalculatorAgent({
+          query: message,
+          context,
+        });
+
+        response = (result.finalOutput || 'No response generated') as string;
+        agentUsed = 'calculator';
+        addTraceEvent(traceId, 'agent_end', { agent: 'calculator' });
+      } else {
+        // Use coach agent for general coaching queries
+        console.log('[AI Query] 💬 Routing to Coach Agent');
+        addTraceEvent(traceId, 'agent_start', { agent: 'coach' });
+
+        const result = await runCoachAgent({
+          message,
+          userId,
+          goalType: goal.type,
+          region: goal.region,
+          conversationHistory: history,
+        });
+
+        response = (result.finalOutput || 'No response generated') as string;
+        agentUsed = 'coach';
+        addTraceEvent(traceId, 'agent_end', { agent: 'coach' });
+      }
     } else {
-      response = await getOpenAIResponse(model, systemPrompt, message, history);
+      // Legacy path: Use direct Claude/OpenAI API calls
+      console.log('[AI Query] 🔧 Using legacy API path');
+
+      // RAG Phase 1: Fetch user's financial context
+      let financialContext = null;
+      if (userId) {
+        financialContext = await getUserFinancialContext(userId);
+      }
+
+      // RAG Phase 2: Search knowledge base
+      const relevantKnowledge = await searchKnowledge(message, {
+        limit: 3,
+        region: goal.region,
+        minSimilarity: 0.75,
+      });
+
+      // Phase 3: Deep Research (optional)
+      if (deepResearch && isPerplexityAvailable()) {
+        try {
+          researchData = await performDeepResearch(message, goal.type, goal.region);
+        } catch (error) {
+          console.error('Deep research failed:', error);
+        }
+      }
+
+      // Build system prompt
+      const systemPrompt = buildSystemPrompt(goal, financialContext, relevantKnowledge, researchData);
+
+      // Get response based on model category
+      if (modelCategory === 'claude') {
+        response = await getClaudeResponse(model, systemPrompt, message, history);
+        agentUsed = 'claude-legacy';
+      } else {
+        response = await getOpenAIResponse(model, systemPrompt, message, history);
+        agentUsed = 'openai-legacy';
+      }
     }
 
+    // ========================================================================
+    // PHASE 3: OUTPUT VALIDATION & GUARDRAILS
+    // ========================================================================
+
+    const needsDisclaimer = requiresDisclaimer(message);
+    const outputValidation = validateOutput(response, {
+      requiresDisclaimer: needsDisclaimer,
+    });
+
+    if (!outputValidation.valid) {
+      console.log('[AI Query] ❌ Output validation failed:', outputValidation.error);
+      addTraceEvent(traceId, 'validation_fail', {
+        phase: 'output',
+        error: outputValidation.error,
+      });
+      return NextResponse.json(
+        { error: 'Failed to generate valid response' },
+        { status: 500 }
+      );
+    }
+
+    if (outputValidation.warnings) {
+      console.log('[AI Query] ⚠️ Output warnings:', outputValidation.warnings);
+    }
+
+    // Use enhanced output (with disclaimer if needed)
+    const finalResponse = outputValidation.enhanced || response;
+
+    // ========================================================================
+    // PHASE 4: LOGGING, TRACING & EVALUATION
+    // ========================================================================
+
+    const duration = Date.now() - startTime;
+    console.log(`[AI Query] ✅ Request completed in ${duration}ms`);
+    console.log(`[AI Query] Agent used: ${agentUsed}`);
+    console.log(`[AI Query] Model: ${model}`);
+    console.log(`[AI Query] Deep research: ${deepResearch ? 'Yes' : 'No'}`);
+    console.log(`[AI Query] Response length: ${finalResponse.length} chars`);
+
+    // End trace
+    const allWarnings = [
+      ...(inputValidation.warnings || []),
+      ...(outputValidation.warnings || []),
+    ];
+
+    endTrace(traceId, {
+      response: finalResponse,
+      research: researchData,
+      warnings: allWarnings,
+      agentUsed,
+    });
+
+    // Evaluate response quality
+    const evaluation = evaluateResponse(
+      traceId,
+      message,
+      finalResponse,
+      allWarnings
+    );
+
     return NextResponse.json({
-      response,
+      response: finalResponse,
       research: researchData,
       model,
+      metadata: {
+        agentUsed,
+        duration,
+        warnings: allWarnings,
+        traceId,
+        evaluation: {
+          score: evaluation.score,
+          dimensions: evaluation.dimensions,
+        },
+      },
     });
   } catch (error) {
-    console.error('AI Query API error:', error);
+    const duration = Date.now() - startTime;
+    console.error(`[AI Query] ❌ Error after ${duration}ms:`, error);
+
+    // Record error in trace
+    if (traceId) {
+      traceError(
+        traceId,
+        error instanceof Error ? error : new Error(String(error)),
+        'QUERY_ERROR'
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to get response', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Failed to get response',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
+}
+
+// Helper function to detect if query is calculation-focused
+function isCalculationQuery(message: string): boolean {
+  const calculationKeywords = [
+    'calculate',
+    'compute',
+    'how much',
+    'how long',
+    'payment',
+    'interest',
+    'save',
+    'months',
+    'years',
+    'debt payoff',
+    'loan',
+  ];
+
+  const lowerMessage = message.toLowerCase();
+  return calculationKeywords.some((keyword) => lowerMessage.includes(keyword));
 }
 
 // Build comprehensive system prompt
