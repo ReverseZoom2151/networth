@@ -152,11 +152,12 @@ const compoundInterestTool = tool({
 
 /**
  * Fetch user's financial context from database
+ * Note: userId parameter is actually a whopId (Whop user identifier)
  */
 const fetchUserContextTool = tool({
   description: 'Fetch user financial context from database',
   parameters: z.object({
-    userId: z.string().describe('User ID to fetch context for'),
+    userId: z.string().describe('User ID (whopId) to fetch context for'),
   }),
   execute: async ({ userId }) => {
     const context = await getUserFinancialContext(userId);
@@ -212,11 +213,12 @@ const deepResearchTool = tool({
 
 /**
  * Analyze user's spending patterns from connected bank accounts
+ * Note: userId parameter is actually a whopId (Whop user identifier)
  */
 const analyzeSpendingTool = tool({
   description: 'Analyze spending patterns from connected bank accounts - provides category breakdown, top expenses, and insights',
   parameters: z.object({
-    userId: z.string().describe('User ID to analyze spending for'),
+    userId: z.string().describe('User ID (whopId) to analyze spending for'),
     days: z.number().optional().describe('Number of days to analyze (default: 30)'),
   }),
   execute: async ({ userId, days = 30 }) => {
@@ -252,11 +254,12 @@ const analyzeSpendingTool = tool({
 
 /**
  * Detect recurring charges and subscriptions
+ * Note: userId parameter is actually a whopId (Whop user identifier)
  */
 const detectSubscriptionsTool = tool({
   description: 'Detect recurring subscriptions and bills from transaction history - helps identify potential savings',
   parameters: z.object({
-    userId: z.string().describe('User ID to analyze'),
+    userId: z.string().describe('User ID (whopId) to analyze'),
   }),
   execute: async ({ userId }) => {
     const recurring = await detectRecurringTransactions(userId);

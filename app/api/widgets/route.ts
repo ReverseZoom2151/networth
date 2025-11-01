@@ -1,5 +1,6 @@
 // API routes for personalized dashboard widgets
 import { NextRequest, NextResponse } from 'next/server';
+import { getUserByWhopId } from '@/lib/db';
 import prisma from '@/lib/prisma';
 
 // GET /api/widgets - Get all widgets for a user
@@ -12,9 +13,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
+    const user = await getUserByWhopId(userId);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const widgets = await prisma.widget.findMany({
       where: {
-        userId,
+        userId: user.id,
         isVisible: true,
       },
       orderBy: {
@@ -41,9 +47,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const user = await getUserByWhopId(userId);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Get the next position
     const lastWidget = await prisma.widget.findFirst({
-      where: { userId },
+      where: { userId: user.id },
       orderBy: { position: 'desc' },
     });
 
@@ -51,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     const widget = await prisma.widget.create({
       data: {
-        userId,
+        userId: user.id,
         widgetType: type,
         size,
         position,
