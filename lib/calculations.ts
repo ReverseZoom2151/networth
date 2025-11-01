@@ -418,3 +418,165 @@ export const DEFAULT_RATES = {
   creditCard: 0.20, // 20%
   personalLoan: 0.10, // 10%
 } as const;
+
+/**
+ * Calculate financial health score (0-100)
+ * Based on multiple factors: savings, debt, spending, investments, credit
+ */
+export function calculateFinancialHealthScore(params: {
+  emergencyFundMonths: number; // Months of expenses saved
+  savingsRate: number; // % of income saved
+  debtToIncomeRatio: number; // Total debt / annual income
+  creditScore: number; // Credit score (0-850)
+  investmentRatio: number; // Investment value / annual income
+  budgetAdherence: number; // % of months within budget (0-1)
+}): {
+  overallScore: number;
+  savingsScore: number;
+  debtScore: number;
+  spendingScore: number;
+  investmentScore: number;
+  creditScore: number;
+} {
+  // Savings Score (0-100)
+  const savingsScore = Math.min(100, 
+    (params.emergencyFundMonths / 6) * 50 + // Emergency fund: 50 points for 6+ months
+    Math.min(50, params.savingsRate * 500) // Savings rate: 50 points for 10%+
+  );
+
+  // Debt Score (0-100)
+  const debtScore = Math.max(0, 
+    100 - (params.debtToIncomeRatio * 200) // Lower debt-to-income = higher score
+  );
+
+  // Spending Score (0-100)
+  const spendingScore = params.budgetAdherence * 100;
+
+  // Investment Score (0-100)
+  const investmentScore = Math.min(100, params.investmentRatio * 25); // 4x income = 100 points
+
+  // Credit Score (0-100) - normalized from 0-850 to 0-100
+  const creditScore = (params.creditScore / 850) * 100;
+
+  // Overall Score (weighted average)
+  const overallScore = Math.round(
+    savingsScore * 0.25 +
+    debtScore * 0.25 +
+    spendingScore * 0.20 +
+    investmentScore * 0.15 +
+    creditScore * 0.15
+  );
+
+  return {
+    overallScore: Math.max(0, Math.min(100, overallScore)),
+    savingsScore: Math.round(savingsScore),
+    debtScore: Math.round(debtScore),
+    spendingScore: Math.round(spendingScore),
+    investmentScore: Math.round(investmentScore),
+    creditScore: Math.round(creditScore),
+  };
+}
+
+/**
+ * Calculate tax estimate
+ */
+export function calculateTaxEstimate(params: {
+  annualIncome: number;
+  filingStatus: 'single' | 'married_joint' | 'married_separate' | 'head_of_household';
+  region: 'US' | 'UK' | 'EU';
+  deductions?: number;
+  credits?: number;
+}): {
+  estimatedTax: number;
+  effectiveRate: number;
+  marginalRate: number;
+  afterTaxIncome: number;
+} {
+  // Simplified tax calculation - in production, use actual tax brackets
+  let estimatedTax = 0;
+  let effectiveRate = 0;
+  let marginalRate = 0;
+
+  if (params.region === 'US') {
+    // 2024 US Federal Tax Brackets (simplified)
+    const taxableIncome = params.annualIncome - (params.deductions || 0);
+    
+    if (params.filingStatus === 'single') {
+      if (taxableIncome <= 11000) {
+        marginalRate = 0.10;
+        estimatedTax = taxableIncome * 0.10;
+      } else if (taxableIncome <= 44725) {
+        marginalRate = 0.12;
+        estimatedTax = 1100 + (taxableIncome - 11000) * 0.12;
+      } else if (taxableIncome <= 95375) {
+        marginalRate = 0.22;
+        estimatedTax = 5147 + (taxableIncome - 44725) * 0.22;
+      } else if (taxableIncome <= 201050) {
+        marginalRate = 0.24;
+        estimatedTax = 16290 + (taxableIncome - 95375) * 0.24;
+      } else {
+        marginalRate = 0.32;
+        estimatedTax = 37104 + (taxableIncome - 201050) * 0.32;
+      }
+    }
+    // Add other filing statuses and state taxes as needed
+    
+    estimatedTax = Math.max(0, estimatedTax - (params.credits || 0));
+  } else if (params.region === 'UK') {
+    // UK tax calculation (simplified)
+    const personalAllowance = 12570; // 2024-25
+    const taxableIncome = Math.max(0, params.annualIncome - personalAllowance - (params.deductions || 0));
+    
+    if (taxableIncome <= 37700) {
+      marginalRate = 0.20;
+      estimatedTax = taxableIncome * 0.20;
+    } else if (taxableIncome <= 125140) {
+      marginalRate = 0.40;
+      estimatedTax = 7540 + (taxableIncome - 37700) * 0.40;
+    } else {
+      marginalRate = 0.45;
+      estimatedTax = 42738 + (taxableIncome - 125140) * 0.45;
+    }
+  }
+
+  effectiveRate = estimatedTax / params.annualIncome;
+  const afterTaxIncome = params.annualIncome - estimatedTax;
+
+  return {
+    estimatedTax: Math.round(estimatedTax),
+    effectiveRate: Math.round(effectiveRate * 100) / 100,
+    marginalRate: Math.round(marginalRate * 100) / 100,
+    afterTaxIncome: Math.round(afterTaxIncome),
+  };
+}
+
+/**
+ * Calculate portfolio allocation recommendation
+ */
+export function calculatePortfolioAllocation(age: number, riskTolerance: 'conservative' | 'moderate' | 'aggressive'): {
+  stocks: number;
+  bonds: number;
+  cash: number;
+  other: number;
+} {
+  // Age-based allocation rule: (100 - age) in stocks
+  let stocks = 100 - age;
+
+  // Adjust based on risk tolerance
+  if (riskTolerance === 'conservative') {
+    stocks = Math.max(20, stocks - 20);
+  } else if (riskTolerance === 'aggressive') {
+    stocks = Math.min(90, stocks + 10);
+  }
+
+  const bonds = Math.max(0, Math.min(60, 100 - stocks - 10));
+  const cash = 10;
+  const other = 0;
+
+  return {
+    stocks: Math.round(stocks),
+    bonds: Math.round(bonds),
+    cash: Math.round(cash),
+    other: Math.round(other),
+  };
+}

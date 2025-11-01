@@ -11,6 +11,9 @@ import { Card, CardBody, LoadingScreen } from '@/components/ui';
 import { NewsWidget } from '@/components/dashboard/NewsWidget';
 import { InterventionsWidget } from '@/components/dashboard/InterventionsWidget';
 import { ProductsWidget } from '@/components/dashboard/ProductsWidget';
+import { BankingWidget } from '@/components/dashboard/BankingWidget';
+import { SpendingInsightsWidget } from '@/components/dashboard/SpendingInsightsWidget';
+import { SubscriptionsWidget } from '@/components/dashboard/SubscriptionsWidget';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -222,8 +225,22 @@ export default function DashboardPage() {
           </CardBody>
         </Card>
 
+        {/* Banking & Spending Section */}
+        <div className="mb-8 space-y-6 animate-slide-up" style={{animationDelay: '0.3s'}}>
+          <h2 className="text-2xl font-bold text-gray-900">💰 Banking & Spending</h2>
+
+          {/* Banking Widget - Full Width */}
+          <BankingWidget userId={userId || ''} />
+
+          {/* Spending Insights & Subscriptions - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SpendingInsightsWidget userId={userId || ''} />
+            <SubscriptionsWidget userId={userId || ''} />
+          </div>
+        </div>
+
         {/* Dashboard Widgets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slide-up" style={{animationDelay: '0.3s'}}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slide-up" style={{animationDelay: '0.4s'}}>
           <NewsWidget userId={userId} />
           <InterventionsWidget userId={userId} />
           <ProductsWidget userId={userId} />

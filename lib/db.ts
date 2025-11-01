@@ -454,12 +454,190 @@ export async function getNetWorthHistory(whopId: string, limit: number = 12) {
 }
 
 // ============================================
-// RAG: USER FINANCIAL CONTEXT
+// TRANSACTION OPERATIONS (Banking)
+// ============================================
+
+/**
+ * Get user transactions with spending analysis
+ */
+export async function getUserTransactions(whopId: string, days: number = 30) {
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) return null;
+
+    const user = await prisma.user.findUnique({
+      where: { whopId },
+      select: { id: true },
+    });
+
+    if (!user) return null;
+
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - days);
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId: user.id,
+        transactionDate: { gte: fromDate },
+      },
+      orderBy: { transactionDate: 'desc' },
+      take: 100, // Limit to last 100 transactions
+    });
+
+    // Calculate spending by category
+    const categorySpending: Record<string, { total: number; count: number; transactions: any[] }> = {};
+    let totalSpent = 0;
+    let totalIncome = 0;
+
+    transactions.forEach((tx) => {
+      const amount = Math.abs(tx.amount);
+
+      if (tx.type === 'debit') {
+        totalSpent += amount;
+
+        if (!categorySpending[tx.category]) {
+          categorySpending[tx.category] = { total: 0, count: 0, transactions: [] };
+        }
+
+        categorySpending[tx.category].total += amount;
+        categorySpending[tx.category].count++;
+        categorySpending[tx.category].transactions.push({
+          amount,
+          description: tx.description,
+          date: tx.transactionDate,
+          merchant: tx.merchantName,
+        });
+      } else {
+        totalIncome += amount;
+      }
+    });
+
+    // Sort categories by spending
+    const topCategories = Object.entries(categorySpending)
+      .map(([category, data]) => ({
+        category,
+        total: data.total,
+        count: data.count,
+        avgTransaction: data.total / data.count,
+        percentage: (data.total / totalSpent) * 100,
+        transactions: data.transactions.slice(0, 5), // Top 5 transactions per category
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    return {
+      totalSpent,
+      totalIncome,
+      netCashFlow: totalIncome - totalSpent,
+      transactionCount: transactions.length,
+      days,
+      categoryBreakdown: topCategories,
+      recentTransactions: transactions.slice(0, 10).map((tx) => ({
+        date: tx.transactionDate,
+        description: tx.description,
+        merchant: tx.merchantName,
+        amount: tx.amount,
+        category: tx.category,
+        type: tx.type,
+      })),
+    };
+  } catch (error) {
+    console.error('Error getting user transactions:', error);
+    return null;
+  }
+}
+
+/**
+ * Detect recurring transactions (subscriptions/bills)
+ */
+export async function detectRecurringTransactions(whopId: string) {
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) return null;
+
+    const user = await prisma.user.findUnique({
+      where: { whopId },
+      select: { id: true },
+    });
+
+    if (!user) return null;
+
+    // Get last 90 days of transactions
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - 90);
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId: user.id,
+        transactionDate: { gte: fromDate },
+        type: 'debit',
+      },
+      orderBy: { transactionDate: 'desc' },
+    });
+
+    // Group by merchant name
+    const merchantGroups: Record<string, any[]> = {};
+    transactions.forEach((tx) => {
+      const merchant = tx.merchantName || tx.description;
+      if (!merchantGroups[merchant]) {
+        merchantGroups[merchant] = [];
+      }
+      merchantGroups[merchant].push(tx);
+    });
+
+    // Find recurring patterns (3+ transactions with similar amounts)
+    const recurring = Object.entries(merchantGroups)
+      .filter(([_, txs]) => txs.length >= 3)
+      .map(([merchant, txs]) => {
+        const amounts = txs.map((tx) => Math.abs(tx.amount));
+        const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+        const amountVariance = Math.max(...amounts) - Math.min(...amounts);
+
+        // Check if amounts are consistent (variance < 20% of average)
+        const isRecurring = amountVariance < avgAmount * 0.2;
+
+        if (isRecurring) {
+          // Calculate frequency
+          const dates = txs.map((tx) => tx.transactionDate.getTime()).sort();
+          const intervals = [];
+          for (let i = 1; i < dates.length; i++) {
+            intervals.push((dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24)); // Days
+          }
+          const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+
+          let frequency = 'unknown';
+          if (avgInterval >= 25 && avgInterval <= 35) frequency = 'monthly';
+          else if (avgInterval >= 6 && avgInterval <= 8) frequency = 'weekly';
+          else if (avgInterval >= 85 && avgInterval <= 95) frequency = 'quarterly';
+          else if (avgInterval >= 360 && avgInterval <= 370) frequency = 'yearly';
+
+          return {
+            merchant,
+            amount: Math.round(avgAmount * 100) / 100,
+            frequency,
+            count: txs.length,
+            lastCharge: txs[0].transactionDate,
+            estimatedAnnualCost: avgAmount * (365 / avgInterval),
+            category: txs[0].category,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    return recurring;
+  } catch (error) {
+    console.error('Error detecting recurring transactions:', error);
+    return null;
+  }
+}
+
+// ============================================
+// RAG: USER FINANCIAL CONTEXT (ENHANCED)
 // ============================================
 
 /**
  * Get comprehensive financial context for AI coaching
- * Fetches all user data needed for personalized advice
+ * Fetches all user data needed for personalized advice including bank transactions
  */
 export async function getUserFinancialContext(whopId: string) {
   try {
@@ -487,6 +665,15 @@ export async function getUserFinancialContext(whopId: string) {
         netWorthSnapshots: {
           orderBy: { date: 'desc' },
           take: 2, // Current and previous for trend
+        },
+        bankConnections: {
+          where: { isActive: true },
+          select: {
+            accountName: true,
+            accountType: true,
+            currentBalance: true,
+            lastSynced: true,
+          },
         },
       },
     });
@@ -519,6 +706,10 @@ export async function getUserFinancialContext(whopId: string) {
       else if (change < -2) netWorthTrend = 'declining';
       else netWorthTrend = 'stable';
     }
+
+    // Get transaction data and spending insights
+    const spendingData = await getUserTransactions(user.whopId, 30);
+    const recurringCharges = await detectRecurringTransactions(user.whopId);
 
     return {
       // User basic info
@@ -576,11 +767,44 @@ export async function getUserFinancialContext(whopId: string) {
         lastUpdated: user.netWorthSnapshots[0].date,
       } : null,
 
+      // Bank accounts (NEW)
+      bankAccounts: user.bankConnections.map(conn => ({
+        name: conn.accountName,
+        type: conn.accountType,
+        balance: conn.currentBalance,
+        lastSynced: conn.lastSynced,
+      })),
+      hasBankAccounts: user.bankConnections.length > 0,
+
+      // Spending insights (NEW)
+      spending: spendingData ? {
+        last30Days: {
+          totalSpent: spendingData.totalSpent,
+          totalIncome: spendingData.totalIncome,
+          netCashFlow: spendingData.netCashFlow,
+          transactionCount: spendingData.transactionCount,
+          topCategories: spendingData.categoryBreakdown.slice(0, 5),
+          recentTransactions: spendingData.recentTransactions,
+        },
+        averageDailySpending: spendingData.totalSpent / 30,
+        projectedMonthlySpending: (spendingData.totalSpent / 30) * 30,
+      } : null,
+
+      // Recurring charges / subscriptions (NEW)
+      subscriptions: recurringCharges || [],
+      monthlySubscriptionCost: recurringCharges
+        ? recurringCharges
+            .filter((s: any) => s.frequency === 'monthly')
+            .reduce((sum: number, s: any) => sum + s.amount, 0)
+        : 0,
+
       // Summary flags
       hasDebt: totalDebt > 0,
       highInterestDebt: user.debts.some(d => d.interestRate > 15),
       hasGoal: !!user.goal,
       goalProgress: progressPercent,
+      hasSpendingData: !!spendingData,
+      hasRecurringCharges: (recurringCharges?.length || 0) > 0,
     };
   } catch (error) {
     console.error('[RAG] Error getting user financial context:', error);

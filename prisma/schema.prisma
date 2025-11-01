@@ -35,6 +35,11 @@ model User {
   guiltyPleasures   GuiltyPleasure[]
   notifications     Notification[]
   achievements      Achievement[]
+  investments       Investment[]
+  creditScores      CreditScore[]
+  financialHealth   FinancialHealth[]
+  taxPlanning       TaxPlan[]
+  budgetTemplates   BudgetTemplate[]
 
   @@index([whopId])
 }
@@ -986,4 +991,195 @@ model SuccessStory {
 
   @@index([goalType, region, featured])
   @@index([featured, inspirationScore])
+}
+
+// ============================================
+// INVESTMENT PLANNING & PORTFOLIO TRACKING
+// ============================================
+
+model Investment {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Investment details
+  name            String   // e.g., "401(k)", "Roth IRA", "Portfolio"
+  type            String   // '401k', 'ira', 'roth_ira', 'brokerage', 'crypto', 'other'
+  provider        String?  // Company/platform name
+  
+  // Balances
+  currentValue    Float    @default(0)
+  contributions   Float    @default(0) // Total contributed
+  gains           Float    @default(0) // Current gains/losses
+  allocation      Json?    // Asset allocation breakdown
+
+  // Risk & goals
+  riskLevel       String?  // 'conservative', 'moderate', 'aggressive'
+  goalType        String?  // Investment goal (retirement, house, etc.)
+  targetDate      DateTime? // Target date for goal
+  
+  // Performance
+  annualReturn    Float?   // Average annual return %
+  lastUpdated     DateTime @default(now())
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, type])
+  @@index([userId, goalType])
+}
+
+model InvestmentTransaction {
+  id              String   @id @default(cuid())
+  investmentId    String
+
+  // Transaction details
+  type            String   // 'contribution', 'withdrawal', 'dividend', 'interest', 'transfer'
+  amount          Float
+  date            DateTime
+  description     String?
+
+  createdAt       DateTime @default(now())
+
+  @@index([investmentId, date])
+}
+
+// ============================================
+// CREDIT SCORE MONITORING
+// ============================================
+
+model CreditScore {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Score details
+  score           Int      // Credit score (e.g., 720)
+  provider        String   // 'equifax', 'experian', 'transunion', 'fico'
+  reportType      String   // 'fico', 'vantagescore', 'other'
+  
+  // Score breakdown
+  factors         Json?    // { paymentHistory: 35, amounts: 30, ... }
+  details         Json?    // Full report details
+  
+  // History
+  previousScore   Int?
+  change          Int?     // Change from last check
+  trend           String?  // 'up', 'down', 'stable'
+  
+  // Recommendations
+  recommendations String[] // Array of improvement suggestions
+  improvementAreas Json?   // Detailed areas for improvement
+
+  // Dates
+  reportDate      DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, reportDate])
+  @@index([userId, score])
+}
+
+// ============================================
+// FINANCIAL HEALTH SCORE
+// ============================================
+
+model FinancialHealth {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Overall score (0-100)
+  overallScore    Int      // Calculated financial health score
+  
+  // Component scores
+  savingsScore    Int      // Emergency fund, goal progress
+  debtScore       Int      // Debt-to-income, payment history
+  spendingScore   Int      // Budget adherence, spending habits
+  investmentScore Int      // Retirement savings, diversification
+  creditScore     Int      // Credit score and history
+  
+  // Breakdown
+  strengths       String[] // Array of financial strengths
+  weaknesses      String[] // Areas needing improvement
+  recommendations String[] // Actionable recommendations
+  
+  // Metrics
+  metrics         Json     // Detailed metrics used in calculation
+  percentile      Float?   // Percentile compared to peers
+  
+  // Dates
+  calculatedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, calculatedAt])
+  @@index([overallScore])
+}
+
+// ============================================
+// TAX PLANNING
+// ============================================
+
+model TaxPlan {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Tax year
+  taxYear         Int      // e.g., 2025
+  
+  // Estimated taxes
+  estimatedIncome Float
+  estimatedTax    Float
+  estimatedRefund Float?   // If negative, amount owed
+  
+  // Deductions & credits
+  deductions      Json?    // Available deductions
+  credits         Json?    // Available tax credits
+  potentialSavings Float?  // Potential savings from deductions/credits
+  
+  // Recommendations
+  recommendations String[] // Tax-saving strategies
+  actionItems     Json?    // Specific actions to take
+  
+  // Status
+  status          String   @default("planning") // 'planning', 'filed', 'complete'
+  filedDate       DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, taxYear])
+  @@unique([userId, taxYear])
+}
+
+// ============================================
+// BUDGET TEMPLATES
+// ============================================
+
+model BudgetTemplate {
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Template details
+  name            String   // e.g., "Student Budget", "Professional Budget"
+  description     String?  @db.Text
+  category        String   // 'student', 'professional', 'family', 'retiree', 'custom'
+  region          String   // 'US', 'UK', 'EU'
+  
+  // Budget allocation (as percentages or amounts)
+  allocations     Json     // { "Housing": 30, "Food": 15, ... }
+  
+  // Usage
+  isDefault       Boolean  @default(false)
+  isPublic        Boolean  @default(false) // Shared templates
+  usageCount      Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category, region, isPublic])
+  @@index([userId])
 }

@@ -7,8 +7,11 @@ import {
   calculateDebtPayoff,
   calculateLoanPayment,
   calculateCompoundInterest,
+  calculateFinancialHealthScore,
+  calculateTaxEstimate,
+  calculatePortfolioAllocation,
 } from './calculations';
-import { getUserFinancialContext } from './db';
+import { getUserFinancialContext, getUserTransactions, detectRecurringTransactions } from './db';
 import { searchKnowledge } from './vector';
 import { performDeepResearch } from './perplexityAPI';
 
@@ -204,6 +207,164 @@ const deepResearchTool = tool({
 });
 
 // ============================================================================
+// SPENDING ANALYSIS TOOLS (NEW - Plaid Integration)
+// ============================================================================
+
+/**
+ * Analyze user's spending patterns from connected bank accounts
+ */
+const analyzeSpendingTool = tool({
+  description: 'Analyze spending patterns from connected bank accounts - provides category breakdown, top expenses, and insights',
+  parameters: z.object({
+    userId: z.string().describe('User ID to analyze spending for'),
+    days: z.number().optional().describe('Number of days to analyze (default: 30)'),
+  }),
+  execute: async ({ userId, days = 30 }) => {
+    const spendingData = await getUserTransactions(userId, days);
+
+    if (!spendingData) {
+      return {
+        error: 'No spending data available. User may need to connect bank accounts first.',
+      };
+    }
+
+    return {
+      period: `Last ${days} days`,
+      summary: {
+        totalSpent: spendingData.totalSpent,
+        totalIncome: spendingData.totalIncome,
+        netCashFlow: spendingData.netCashFlow,
+        transactionCount: spendingData.transactionCount,
+        averageDailySpending: spendingData.totalSpent / days,
+        projectedMonthlySpending: (spendingData.totalSpent / days) * 30,
+      },
+      categoryBreakdown: spendingData.categoryBreakdown.map(cat => ({
+        category: cat.category,
+        total: cat.total,
+        percentage: Math.round(cat.percentage * 10) / 10,
+        transactionCount: cat.count,
+        avgPerTransaction: Math.round(cat.avgTransaction * 100) / 100,
+      })),
+      recentTransactions: spendingData.recentTransactions,
+    };
+  },
+});
+
+/**
+ * Detect recurring charges and subscriptions
+ */
+const detectSubscriptionsTool = tool({
+  description: 'Detect recurring subscriptions and bills from transaction history - helps identify potential savings',
+  parameters: z.object({
+    userId: z.string().describe('User ID to analyze'),
+  }),
+  execute: async ({ userId }) => {
+    const recurring = await detectRecurringTransactions(userId);
+
+    if (!recurring || recurring.length === 0) {
+      return {
+        message: 'No recurring charges detected. User may need more transaction history.',
+      };
+    }
+
+    const monthlySubscriptions = recurring.filter((s: any) => s.frequency === 'monthly');
+    const totalMonthlySubscriptions = monthlySubscriptions.reduce(
+      (sum: number, s: any) => sum + s.amount,
+      0
+    );
+    const totalAnnualCost = recurring.reduce(
+      (sum: number, s: any) => sum + s.estimatedAnnualCost,
+      0
+    );
+
+    return {
+      subscriptions: recurring.map((s: any) => ({
+        merchant: s.merchant,
+        amount: s.amount,
+        frequency: s.frequency,
+        category: s.category,
+        timesCharged: s.count,
+        lastCharge: s.lastCharge,
+        estimatedAnnualCost: Math.round(s.estimatedAnnualCost * 100) / 100,
+      })),
+      summary: {
+        totalSubscriptions: recurring.length,
+        monthlySubscriptions: monthlySubscriptions.length,
+        totalMonthlySubscriptionCost: Math.round(totalMonthlySubscriptions * 100) / 100,
+        estimatedAnnualCost: Math.round(totalAnnualCost * 100) / 100,
+      },
+      insights: {
+        largestSubscription: recurring.sort((a: any, b: any) =>
+          b.estimatedAnnualCost - a.estimatedAnnualCost
+        )[0],
+      },
+    };
+  },
+});
+
+/**
+ * Calculate financial health score
+ */
+const financialHealthTool = tool({
+  description: 'Calculate overall financial health score (0-100) based on savings, debt, spending, investments, and credit',
+  parameters: z.object({
+    emergencyFundMonths: z.number().describe('Months of expenses saved in emergency fund'),
+    savingsRate: z.number().describe('Percentage of income saved (as decimal, e.g., 0.20 for 20%)'),
+    debtToIncomeRatio: z.number().describe('Total debt divided by annual income'),
+    creditScore: z.number().describe('Credit score (0-850)'),
+    investmentRatio: z.number().describe('Investment value divided by annual income'),
+    budgetAdherence: z.number().describe('Percentage of months within budget (0-1)'),
+  }),
+  execute: async ({ emergencyFundMonths, savingsRate, debtToIncomeRatio, creditScore, investmentRatio, budgetAdherence }) => {
+    return calculateFinancialHealthScore({
+      emergencyFundMonths,
+      savingsRate,
+      debtToIncomeRatio,
+      creditScore,
+      investmentRatio,
+      budgetAdherence,
+    });
+  },
+});
+
+/**
+ * Calculate tax estimate
+ */
+const taxEstimateTool = tool({
+  description: 'Estimate tax liability based on income, filing status, and region',
+  parameters: z.object({
+    annualIncome: z.number().describe('Annual gross income'),
+    filingStatus: z.enum(['single', 'married_joint', 'married_separate', 'head_of_household']).describe('Tax filing status'),
+    region: z.enum(['US', 'UK', 'EU']).describe('Region for tax calculation'),
+    deductions: z.number().optional().describe('Total deductions'),
+    credits: z.number().optional().describe('Total tax credits'),
+  }),
+  execute: async ({ annualIncome, filingStatus, region, deductions, credits }) => {
+    return calculateTaxEstimate({
+      annualIncome,
+      filingStatus,
+      region,
+      deductions,
+      credits,
+    });
+  },
+});
+
+/**
+ * Calculate portfolio allocation recommendation
+ */
+const portfolioAllocationTool = tool({
+  description: 'Calculate recommended portfolio allocation based on age and risk tolerance',
+  parameters: z.object({
+    age: z.number().describe('Current age'),
+    riskTolerance: z.enum(['conservative', 'moderate', 'aggressive']).describe('Risk tolerance level'),
+  }),
+  execute: async ({ age, riskTolerance }) => {
+    return calculatePortfolioAllocation(age, riskTolerance);
+  },
+});
+
+// ============================================================================
 // CALCULATOR AGENT - Specialized for financial calculations
 // ============================================================================
 
@@ -230,6 +391,9 @@ When presenting results, format currency values clearly and explain what the num
     debtPayoffTool,
     loanPaymentTool,
     compoundInterestTool,
+    financialHealthTool,
+    taxEstimateTool,
+    portfolioAllocationTool,
   ],
 });
 
@@ -268,16 +432,29 @@ Present research in a structured format with:
 
 export const contextAgent = new Agent({
   name: 'Context',
-  instructions: `You are a financial context specialist. Your role is to:
-1. Fetch user financial data from the database
-2. Search the knowledge base for relevant information
-3. Organize context in a clear, structured format
-4. Identify missing or incomplete information
-5. Suggest what additional context might be helpful
+  instructions: `You are a financial context specialist with access to banking data. Your role is to:
+1. Fetch user financial data from the database including bank transactions
+2. Analyze spending patterns from connected bank accounts
+3. Detect subscriptions and recurring charges to identify savings opportunities
+4. Search the knowledge base for relevant information
+5. Organize context in a clear, structured format
+6. Identify missing or incomplete information
+
+When analyzing spending:
+- Break down spending by category
+- Calculate spending rates and trends
+- Identify opportunities for savings
+- Detect unused subscriptions or high-cost recurring charges
+- Compare spending to budget and savings goals
 
 Always respect user privacy and only share information that's relevant to the current query.`,
   model: AI_MODELS.mini,
-  tools: [fetchUserContextTool, searchKnowledgeTool],
+  tools: [
+    fetchUserContextTool,
+    searchKnowledgeTool,
+    analyzeSpendingTool,
+    detectSubscriptionsTool,
+  ],
 });
 
 // ============================================================================
@@ -329,6 +506,9 @@ export const coachAgent = new Agent({
     futureValueTool,
     monthlyPaymentTool,
     timeToGoalTool,
+    financialHealthTool,
+    taxEstimateTool,
+    portfolioAllocationTool,
   ],
   // Handoffs to specialist agents
   handoffs: [calculatorAgent, researchAgent, contextAgent],
