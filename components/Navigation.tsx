@@ -13,12 +13,11 @@ export function Navigation() {
   const navigation = [
     { name: 'Home', href: '/dashboard', icon: '🏠' },
     { name: 'Goals', href: '/goals', icon: '🎯' },
+    { name: 'AI Assistant', href: '/ai', icon: '🤖' },
     { name: 'News', href: '/news', icon: '📰' },
-    { name: 'Research', href: '/research', icon: '🔍' },
     { name: 'Products', href: '/products', icon: '💳' },
     { name: 'Invest', href: '/invest', icon: '📈' },
     { name: 'Stories', href: '/stories', icon: '⭐' },
-    { name: 'Coach', href: '/coach', icon: '💬' },
   ];
 
   const isActive = (href: string) => pathname === href;

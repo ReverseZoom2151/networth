@@ -59,12 +59,22 @@ export function NewsWidget({ userId }: Props) {
       setLoading(true);
       const params = new URLSearchParams();
       params.append('userId', userId);
-      params.append('limit', '3');
+      params.append('timeframe', '1w'); // Default to 1 week for dashboard
 
-      const response = await fetch(`/api/news/impacts?${params}`);
+      // Use the same real-time API as the news page
+      const response = await fetch(`/api/news/realtime?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setNews(data.slice(0, 3)); // Show top 3
+        // Map to NewsItem format
+        const articles = (data.articles || []).slice(0, 3).map((article: any) => ({
+          id: article.id,
+          title: article.title,
+          summary: article.summary,
+          category: article.category,
+          impactType: article.impactType,
+          urgency: article.urgency,
+        }));
+        setNews(articles);
       }
     } catch (error) {
       console.error('Failed to fetch news:', error);

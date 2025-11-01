@@ -121,7 +121,7 @@ export default function DashboardPage() {
     { name: 'Budget Tracker', icon: '💳', description: 'Track spending across categories', href: '/tools' },
     { name: 'Bill Reminders', icon: '🔔', description: 'Never miss a payment', href: '/tools' },
     { name: 'Debt Payoff', icon: '💸', description: 'Compare payoff strategies', href: '/tools' },
-    { name: 'Ask AI Coach', icon: '💬', description: 'Get personalized advice', href: '/coach', premium: true },
+    { name: 'Ask AI Assistant', icon: '🤖', description: 'Chat & research with AI', href: '/ai', premium: true },
   ];
 
   return (
