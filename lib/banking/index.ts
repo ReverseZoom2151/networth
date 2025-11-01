@@ -4,6 +4,7 @@
 import { BankingProvider, BankingProviderType, BankingConfig } from './types';
 import { MockBankingProvider } from './providers/mock';
 import { TrueLayerProvider } from './providers/truelayer';
+import { PlaidProvider } from './providers/plaid';
 
 export * from './types';
 
@@ -15,13 +16,15 @@ export function getBankingProvider(type?: BankingProviderType): BankingProvider 
 
   const config: BankingConfig = {
     provider: providerType,
-    clientId: process.env.TRUELAYER_CLIENT_ID,
-    clientSecret: process.env.TRUELAYER_CLIENT_SECRET,
+    clientId: providerType === 'plaid' ? process.env.PLAID_CLIENT_ID : process.env.TRUELAYER_CLIENT_ID,
+    clientSecret: providerType === 'plaid' ? process.env.PLAID_SECRET : process.env.TRUELAYER_CLIENT_SECRET,
     redirectUri: process.env.TRUELAYER_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL}/api/banking/callback`,
-    environment: (process.env.TRUELAYER_ENVIRONMENT as 'sandbox' | 'production') || 'sandbox',
+    environment: (process.env.PLAID_ENVIRONMENT || process.env.TRUELAYER_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production',
   };
 
   switch (providerType) {
+    case 'plaid':
+      return new PlaidProvider(config);
     case 'truelayer':
       return new TrueLayerProvider(config);
     case 'mock':

@@ -61,9 +61,11 @@
     "financial": "^0.2.4",
     "next": "^15.5.6",
     "openai": "^6.7.0",
+    "plaid": "^39.1.0",
     "prisma": "^6.18.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-plaid-link": "^4.1.1",
     "rss-parser": "^3.13.0",
     "ws": "^8.18.3",
     "zod": "^3.25.76"
