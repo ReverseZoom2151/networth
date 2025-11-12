@@ -203,63 +203,51 @@ export default function AIPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="flex min-h-screen items-center justify-center bg-background transition-colors">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-accent"></div>
+          <p className="text-muted">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="flex min-h-screen flex-col bg-background transition-colors">
       <Navigation />
 
-      <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 sm:px-6 lg:px-8">
         {/* Feature Description Header */}
-        <Card className="p-6 mb-6 bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100">
-          <div className="flex items-start space-x-4">
+        <Card className="mb-6 border border-border/60 bg-surface-muted p-6 shadow-sm animate-fade-in dark:bg-surface/70">
+          <div className="flex items-start gap-4">
             <span className="text-5xl">🤖</span>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Financial Assistant</h1>
-              <p className="text-gray-700 mb-3">
+              <h1 className="mb-2 text-2xl font-bold text-foreground">AI Financial Assistant</h1>
+              <p className="mb-3 text-muted-foreground">
                 Get personalized advice and comprehensive research powered by the latest AI models.
                 Choose between Claude and GPT-5, enable deep research, or have voice conversations.
               </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 shadow-sm">
-                  ✓ 7 AI models
-                </span>
-                <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 shadow-sm">
-                  ✓ Voice conversations
-                </span>
-                <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 shadow-sm">
-                  ✓ Financial calculators
-                </span>
-                <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 shadow-sm">
-                  ✓ Deep research mode
-                </span>
-                <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 shadow-sm">
-                  ✓ Personalized to you
-                </span>
+              <div className="flex flex-wrap gap-2 text-xs font-medium text-muted-foreground">
+                <span className="rounded-full bg-background/80 px-3 py-1 shadow-sm">✓ 7 AI models</span>
+                <span className="rounded-full bg-background/80 px-3 py-1 shadow-sm">✓ Voice conversations</span>
+                <span className="rounded-full bg-background/80 px-3 py-1 shadow-sm">✓ Financial calculators</span>
+                <span className="rounded-full bg-background/80 px-3 py-1 shadow-sm">✓ Deep research mode</span>
+                <span className="rounded-full bg-background/80 px-3 py-1 shadow-sm">✓ Personalized to you</span>
               </div>
             </div>
           </div>
         </Card>
 
         {/* Model Selection & Controls */}
-        <Card className="p-5 mb-6 border-gray-200">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="mb-6 border border-border/60 bg-surface p-5 shadow-sm animate-slide-up">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Model Selector */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Select AI Model
-              </label>
+              <label className="mb-2 block text-sm font-semibold text-foreground">Select AI Model</label>
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value as ModelKey)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white shadow-sm"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-foreground shadow-sm transition focus:border-transparent focus:ring-2 focus:ring-accent"
               >
                 <optgroup label="🧠 Claude (Anthropic)">
                   {Object.entries(AI_MODELS)
@@ -280,22 +268,18 @@ export default function AIPage() {
                     ))}
                 </optgroup>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Using: {AI_MODELS[selectedModel].provider}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Using: {AI_MODELS[selectedModel].provider}</p>
             </div>
 
             {/* Deep Research Toggle */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Research Mode
-              </label>
+              <label className="mb-2 block text-sm font-semibold text-foreground">Research Mode</label>
               <button
                 onClick={() => setDeepResearch(!deepResearch)}
-                className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all shadow-sm ${
+                className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium shadow-sm transition-all ${
                   deepResearch
-                    ? 'bg-purple-600 text-white hover:bg-purple-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                    ? 'bg-accent text-accent-foreground hover:opacity-90'
+                    : 'border border-border bg-surface-muted text-muted hover:bg-surface'
                 }`}
                 disabled={voiceMode}
               >
@@ -305,7 +289,7 @@ export default function AIPage() {
                     <span>{deepResearch ? 'Deep Research Active' : 'Chat Mode'}</span>
                   </div>
                   <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    deepResearch ? 'bg-purple-400' : 'bg-gray-400'
+                    deepResearch ? 'bg-accent/70' : 'bg-muted/40'
                   }`}>
                     <span
                       className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
@@ -315,22 +299,20 @@ export default function AIPage() {
                   </div>
                 </div>
               </button>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {deepResearch ? 'Multi-source research with citations' : 'Fast conversational responses'}
               </p>
             </div>
 
             {/* Voice Mode Toggle */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Interaction Mode
-              </label>
+              <label className="mb-2 block text-sm font-semibold text-foreground">Interaction Mode</label>
               <button
                 onClick={() => setVoiceMode(!voiceMode)}
-                className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all shadow-sm ${
+                className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium shadow-sm transition-all ${
                   voiceMode
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                    ? 'bg-success-600 text-white hover:bg-success-700'
+                    : 'border border-border bg-surface-muted text-muted hover:bg-surface'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -339,7 +321,7 @@ export default function AIPage() {
                     <span>{voiceMode ? 'Voice Mode' : 'Text Mode'}</span>
                   </div>
                   <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    voiceMode ? 'bg-green-400' : 'bg-gray-400'
+                    voiceMode ? 'bg-success-400' : 'bg-muted/40'
                   }`}>
                     <span
                       className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
@@ -349,7 +331,7 @@ export default function AIPage() {
                   </div>
                 </div>
               </button>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {voiceMode ? 'Real-time voice conversation' : 'Type your questions'}
               </p>
             </div>
@@ -366,158 +348,124 @@ export default function AIPage() {
           />
         ) : (
           /* Chat Container */
-          <Card className="flex-1 overflow-hidden flex flex-col border-gray-200 shadow-lg">
+          <Card className="flex-1 flex flex-col overflow-hidden border border-border/60 bg-surface shadow-lg">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-            {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center py-12">
-                <div className="text-7xl mb-6 animate-pulse">
-                  {AI_MODELS[selectedModel].icon}
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  Ask me anything about money!
-                </h3>
-                <p className="text-gray-600 mb-2 text-center max-w-md">
-                  I can help with savings strategies, debt payoff plans, investment basics, and comprehensive research.
-                </p>
-                <p className="text-sm text-purple-600 font-medium mb-8">
-                  {AI_MODELS[selectedModel].name} • {deepResearch ? 'Deep Research Mode' : 'Chat Mode'}
-                </p>
+            <div className="flex-1 space-y-4 overflow-y-auto bg-surface-muted p-6 dark:bg-surface/60">
+              {messages.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center py-12">
+                  <div className="mb-6 text-7xl animate-pulse">{AI_MODELS[selectedModel].icon}</div>
+                  <h3 className="mb-2 text-2xl font-bold text-foreground">Ask me anything about money!</h3>
+                  <p className="mb-2 max-w-md text-center text-muted">
+                    I can help with savings strategies, debt payoff plans, investment basics, and comprehensive research.
+                  </p>
+                  <p className="mb-8 text-sm font-medium text-accent">
+                    {AI_MODELS[selectedModel].name} • {deepResearch ? 'Deep Research Mode' : 'Chat Mode'}
+                  </p>
 
-                {/* Suggested Prompts Grid */}
-                <div className="w-full max-w-2xl">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3 text-center">
-                    Suggested Prompts
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {suggestedPrompts.map((prompt, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setInputMessage(prompt.text)}
-                        className="text-left p-4 bg-white hover:bg-purple-50 rounded-lg text-sm text-gray-700 transition-all border border-gray-200 hover:border-purple-300 hover:shadow-md"
-                      >
-                        <div className="flex items-start space-x-2">
-                          <span className="text-lg flex-shrink-0">{prompt.icon}</span>
-                          <span className="flex-1">{prompt.text}</span>
-                        </div>
-                      </button>
-                    ))}
+                  {/* Suggested Prompts Grid */}
+                  <div className="w-full max-w-2xl">
+                    <h4 className="mb-3 text-center text-sm font-semibold text-muted">Suggested Prompts</h4>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      {suggestedPrompts.map((prompt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setInputMessage(prompt.text)}
+                          className="rounded-lg border border-border bg-surface p-4 text-left text-sm text-muted-foreground transition-all hover:border-accent/60 hover:bg-surface-muted hover:shadow-md"
+                        >
+                          <div className="flex items-start space-x-2">
+                            <span className="text-lg flex-shrink-0">{prompt.icon}</span>
+                            <span>{prompt.text}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <>
-                {messages.map((msg, i) => (
+              ) : (
+                messages.map((message, index) => (
                   <div
-                    key={i}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    key={index}
+                    className={`max-w-3xl rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                      message.role === 'user'
+                        ? 'ml-auto bg-foreground text-background'
+                        : 'bg-surface text-foreground'
+                    }`}
                   >
-                    <div
-                      className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
-                        msg.role === 'user'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white text-gray-900 border border-gray-200'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                      <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-purple-200' : 'text-gray-500'}`}>
-                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
+                    <p className="whitespace-pre-line leading-relaxed">{message.content}</p>
+                    <p className="mt-2 text-xs uppercase tracking-wide text-muted-foreground">
+                      {message.role === 'user' ? 'You' : 'AI Coach'} • {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
-                ))}
+                ))
+              )}
 
-                {/* Research Results */}
-                {research && (
-                  <div className="space-y-4 pt-4">
-                    <Card className="p-5 bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
-                      <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                        <span className="text-xl mr-2">📋</span>
-                        Research Summary
-                      </h4>
-                      <p className="text-sm text-gray-700 leading-relaxed">{research.summary}</p>
-                    </Card>
+              {research && (
+                <div className="rounded-2xl border border-border/60 bg-surface p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-foreground">Research Summary</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{research.summary}</p>
 
-                    {research.keyFindings.length > 0 && (
-                      <Card className="p-5 border-blue-200">
-                        <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                          <span className="text-xl mr-2">🔑</span>
-                          Key Findings
-                        </h4>
-                        <ul className="space-y-2">
-                          {research.keyFindings.map((finding, idx) => (
-                            <li key={idx} className="text-sm text-gray-700 flex items-start">
-                              <span className="text-purple-600 font-bold mr-2 mt-0.5">•</span>
-                              <span className="flex-1">{finding}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </Card>
-                    )}
-
-                    {research.sources.length > 0 && (
-                      <Card className="p-5 border-gray-200">
-                        <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                          <span className="text-xl mr-2">📚</span>
-                          Sources ({research.sources.length})
-                        </h4>
-                        <div className="space-y-2">
-                          {research.sources.slice(0, 3).map((source, idx) => (
-                            <a
-                              key={idx}
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block text-xs text-purple-600 hover:text-purple-700 hover:underline"
-                            >
-                              {idx + 1}. {source.title} →
-                            </a>
-                          ))}
-                        </div>
-                      </Card>
-                    )}
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-foreground">Key Findings</h4>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                      {research.keyFindings.map((finding, i) => (
+                        <li key={i}>{finding}</li>
+                      ))}
+                    </ul>
                   </div>
-                )}
 
-                {sending && (
-                  <div className="flex justify-start">
-                    <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-200">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      </div>
-                    </div>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-foreground">Recommendations</h4>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                      {research.recommendations.map((recommendation, i) => (
+                        <li key={i}>{recommendation}</li>
+                      ))}
+                    </ul>
                   </div>
-                )}
-              </>
-            )}
-          </div>
 
-          {/* Input */}
-          <div className="border-t border-gray-200 p-4 bg-white">
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={deepResearch ? "Ask a research question..." : "Ask me anything about money..."}
-                disabled={sending}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 text-sm shadow-sm"
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!inputMessage.trim() || sending}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0 shadow-sm"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              </button>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-foreground">Sources</h4>
+                    <ul className="mt-2 space-y-2 text-sm text-accent">
+                      {research.sources.map((source, i) => (
+                        <li key={i}>
+                          <a href={source.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                            {source.title}
+                          </a>
+                          <p className="text-xs text-muted-foreground">{source.snippet}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        </Card>
+
+            {/* Input */}
+            <div className="border-t border-border/60 bg-surface p-4">
+              <div className="flex space-x-3">
+                <textarea
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  className="flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-3 text-sm text-foreground transition focus:border-transparent focus:ring-2 focus:ring-accent"
+                  rows={2}
+                  placeholder="Ask about savings, investing, debt payoff, or financial research..."
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={sending || !inputMessage.trim()}
+                  className={`rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${
+                    sending || !inputMessage.trim()
+                      ? 'cursor-not-allowed bg-muted/20 text-muted'
+                      : deepResearch
+                      ? 'bg-accent text-accent-foreground hover:opacity-90 shadow-md'
+                      : 'bg-success-600 text-white hover:bg-success-700 shadow-md'
+                  }`}
+                >
+                  {sending ? 'Sending...' : deepResearch ? 'Research' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </Card>
         )}
       </main>
     </div>

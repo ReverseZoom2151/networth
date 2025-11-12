@@ -3,17 +3,20 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useWhop } from '@/app/providers';
+import { useTheme } from '@/app/theme-provider';
 
 export function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
   const { hasAccess } = useWhop();
+  const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navigation: Array<{name: string; href: string; icon: string; premium?: boolean}> = [
+  const navigation: Array<{ name: string; href: string; icon: string; premium?: boolean }> = [
     { name: 'Home', href: '/dashboard', icon: '🏠' },
     { name: 'Goals', href: '/goals', icon: '🎯' },
-    { name: 'AI Assistant', href: '/ai', icon: '🤖' },
+    // AI Assistant temporarily disabled
+    // { name: 'AI Assistant', href: '/ai', icon: '🤖' },
     { name: 'News', href: '/news', icon: '📰' },
     { name: 'Products', href: '/products', icon: '💳' },
     { name: 'Invest', href: '/invest', icon: '📈' },
@@ -22,7 +25,13 @@ export function Navigation() {
 
   const isActive = (href: string) => pathname === href;
 
-  const handleNavigate = (href: string, premium: boolean = false) => {
+  const actionButtonClasses =
+    'rounded-lg px-4 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent/40';
+
+  const baseNavButtonClasses =
+    'flex items-center space-x-2 rounded-full border px-4 py-2 text-sm font-medium transition-all';
+
+  const handleNavigate = (href: string, premium = false) => {
     if (premium && !hasAccess) {
       router.push('/subscribe');
       return;
@@ -32,93 +41,107 @@ export function Navigation() {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-8">
-          {/* Logo */}
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="flex items-center space-x-3 flex-shrink-0 min-w-[140px]"
-          >
-            <img src="/logo.png" alt="Networth" className="w-8 h-8" />
-            <span className="font-bold text-gray-900 text-lg hidden sm:inline">Networth</span>
-          </button>
+    <nav className="sticky top-0 z-50 border-b border-border/60 bg-surface/90 backdrop-blur supports-[backdrop-filter]:bg-surface/80 shadow-sm">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-8">
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="flex min-w-[140px] flex-shrink-0 items-center space-x-3"
+        >
+          <img src="/logo.png" alt="Networth" className="h-8 w-8" />
+          <span className="hidden text-lg font-bold text-foreground sm:inline">Networth</span>
+        </button>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1 flex-1 justify-center">
-            {navigation.map((item) => (
+        <div className="hidden flex-1 items-center justify-center space-x-1 md:flex">
+          {navigation.map((item) => {
+            const active = isActive(item.href);
+            return (
               <button
                 key={item.name}
                 onClick={() => handleNavigate(item.href, item.premium)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 ${
-                  isActive(item.href)
-                    ? 'bg-black text-white'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                className={`${baseNavButtonClasses} ${
+                  active
+                    ? 'border-accent/50 bg-surface text-foreground shadow-sm'
+                    : 'border-transparent text-muted hover:border-border hover:bg-surface-muted hover:text-foreground'
                 }`}
               >
                 <span>{item.icon}</span>
                 <span>{item.name}</span>
                 {item.premium && !hasAccess && (
-                  <span className="ml-1 text-xs bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded">
+                  <span className="ml-1 rounded bg-surface-muted px-1.5 py-0.5 text-xs text-muted">
                     Pro
                   </span>
                 )}
               </button>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
-          {/* Desktop Actions */}
-          <div className="hidden md:flex items-center space-x-3">
-            {!hasAccess && (
-              <button
-                onClick={() => router.push('/subscribe')}
-                className="bg-black hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              >
-                Upgrade
-              </button>
-            )}
-            <button
-              onClick={() => router.push('/settings')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                pathname === '/settings'
-                  ? 'bg-black text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-            >
-              Settings
-            </button>
-          </div>
-
-          {/* Mobile Menu Button */}
+        <div className="hidden items-center space-x-2 md:flex">
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-50"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className={`${actionButtonClasses} border border-border bg-surface-muted text-foreground hover:bg-surface`}
           >
-            {mobileMenuOpen ? (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
+            {theme === 'dark' ? '🌙' : '☀️'}
+          </button>
+          {!hasAccess && (
+            <button
+              onClick={() => router.push('/subscribe')}
+              className={`${actionButtonClasses} bg-[var(--button-primary-bg)] text-[color:var(--button-primary-fg)] hover:opacity-90`}
+            >
+              Upgrade
+            </button>
+          )}
+          <button
+            onClick={() => router.push('/settings')}
+            className={`${actionButtonClasses} ${
+              pathname === '/settings'
+                ? 'bg-surface text-foreground shadow'
+                : 'border border-border bg-surface-muted text-muted hover:text-foreground hover:bg-surface'
+            }`}
+          >
+            Settings
           </button>
         </div>
+
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="rounded-lg p-2 text-muted hover:bg-surface-muted md:hidden"
+          aria-label="Toggle navigation menu"
+        >
+          {mobileMenuOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white">
-          <div className="px-4 py-3 space-y-1">
+        <div className="md:hidden border-t border-border/60 bg-surface">
+          <div className="space-y-2 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted">Appearance</span>
+              <button
+                onClick={toggleTheme}
+                className="rounded-full border border-border bg-surface-muted px-3 py-1 text-xs font-semibold text-muted hover:bg-surface"
+              >
+                {theme === 'dark' ? 'Dark' : 'Light'}
+              </button>
+            </div>
+
             {navigation.map((item) => (
               <button
                 key={item.name}
                 onClick={() => handleNavigate(item.href, item.premium)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`${baseNavButtonClasses} w-full justify-between ${
                   isActive(item.href)
-                    ? 'bg-black text-white'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'border-accent/50 bg-surface text-foreground shadow-sm'
+                    : 'border-transparent text-muted hover:border-border hover:bg-surface-muted hover:text-foreground'
                 }`}
               >
                 <div className="flex items-center space-x-3">
@@ -126,21 +149,19 @@ export function Navigation() {
                   <span>{item.name}</span>
                 </div>
                 {item.premium && !hasAccess && (
-                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
-                    Pro
-                  </span>
+                  <span className="rounded bg-surface-muted px-2 py-1 text-xs text-muted">Pro</span>
                 )}
               </button>
             ))}
 
-            <div className="pt-3 mt-3 border-t border-gray-200 space-y-2">
+            <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
               {!hasAccess && (
                 <button
                   onClick={() => {
                     router.push('/subscribe');
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full bg-black hover:bg-gray-900 text-white px-4 py-3 rounded-lg text-sm font-semibold transition-colors"
+                  className="w-full rounded-lg bg-[var(--button-primary-bg)] px-4 py-3 text-sm font-semibold text-[color:var(--button-primary-fg)] transition-colors hover:opacity-90"
                 >
                   Upgrade to Pro
                 </button>
@@ -150,10 +171,10 @@ export function Navigation() {
                   router.push('/settings');
                   setMobileMenuOpen(false);
                 }}
-                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${
+                className={`${baseNavButtonClasses} w-full justify-between text-sm font-semibold ${
                   pathname === '/settings'
-                    ? 'bg-black text-white'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'border-accent/50 bg-surface text-foreground shadow-sm'
+                    : 'border-transparent text-muted hover:border-border hover:bg-surface-muted hover:text-foreground'
                 }`}
               >
                 Settings

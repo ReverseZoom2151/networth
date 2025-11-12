@@ -7,7 +7,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ children, hover = false, glass = false, className = '', ...props }: CardProps) {
-  const baseStyles = 'bg-white rounded-2xl border border-gray-200 shadow-soft';
+  const baseStyles = 'card';
   const hoverStyles = hover ? 'card-hover' : '';
   const glassStyles = glass ? 'glass' : '';
 
@@ -24,7 +24,7 @@ interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
 
 export function CardHeader({ children, className = '', ...props }: CardHeaderProps) {
   return (
-    <div className={`p-6 border-b border-gray-100 ${className}`} {...props}>
+    <div className={`p-6 border-b border-border/60 ${className}`} {...props}>
       {children}
     </div>
   );
@@ -48,7 +48,7 @@ interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
 
 export function CardFooter({ children, className = '', ...props }: CardFooterProps) {
   return (
-    <div className={`p-6 border-t border-gray-100 ${className}`} {...props}>
+    <div className={`p-6 border-t border-border/60 ${className}`} {...props}>
       {children}
     </div>
   );

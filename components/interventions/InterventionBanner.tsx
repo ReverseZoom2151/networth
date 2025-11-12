@@ -83,13 +83,13 @@ export default function InterventionBanner({ userId, onViewDetails }: Interventi
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => onViewDetails(intervention.id)}
-              className="px-4 py-1.5 bg-white text-gray-900 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors whitespace-nowrap"
+              className="rounded-lg bg-surface px-4 py-1.5 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted whitespace-nowrap"
             >
               View
             </button>
             <button
               onClick={handleDismiss}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+              className="rounded-lg p-1.5 transition-colors hover:bg-background/20"
               aria-label="Dismiss"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

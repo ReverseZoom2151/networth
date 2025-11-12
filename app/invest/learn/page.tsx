@@ -244,9 +244,9 @@ export default function InvestLearnPage() {
   const completedCount = profile?.modulesCompleted?.length || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background transition-colors">
       <Navigation />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
           <button
@@ -282,7 +282,7 @@ export default function InvestLearnPage() {
                       ? 'bg-purple-600 text-white'
                       : completed
                         ? 'bg-green-100 text-green-700 border-2 border-green-300'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-surface-muted text-muted hover:bg-surface'
                   }`}
                 >
                   <span className="mr-2">{m.icon}</span>

@@ -201,9 +201,9 @@ export default function CurrencySettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background transition-colors">
       <Navigation />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
           <button
@@ -212,8 +212,8 @@ export default function CurrencySettingsPage() {
           >
             ← Back to Settings
           </button>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Currency Settings</h1>
-          <p className="text-gray-600">Choose your preferred currency for displaying amounts</p>
+          <h1 className="mb-3 text-3xl font-bold text-foreground">Currency Settings</h1>
+          <p className="text-muted">Choose your preferred currency for displaying amounts</p>
         </div>
 
         {/* Search */}

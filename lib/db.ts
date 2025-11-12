@@ -6,7 +6,77 @@
  */
 
 import prisma from './prisma';
-import { UserGoal as UserGoalType } from './types';
+import { storyEvents } from './events';
+import { randomUUID } from 'crypto';
+import type { Transaction, Bill, Debt, BankConnection, Prisma } from '@prisma/client';
+import { UserGoal as UserGoalType, CommunityStory, StoryLeaderboard } from './types';
+
+type MemoryStory = {
+  id: string;
+  userId: string;
+  authorName: string;
+  goalType: string;
+  title: string;
+  summary: string;
+  story: string;
+  tips: string[];
+  milestones?: Record<string, unknown> | null;
+  region?: string | null;
+  targetAmount?: number | null;
+  timeframeMonths?: number | null;
+  visibility: string;
+  status: string;
+  likes: number;
+  commentCount: number;
+  featured: boolean;
+  submittedAt: string;
+  updatedAt: string;
+};
+
+type MemoryReaction = {
+  id: string;
+  storyId: string;
+  actorId: string;
+  reaction: string;
+  createdAt: string;
+};
+
+type MemoryStoryStore = {
+  stories: MemoryStory[];
+  reactions: MemoryReaction[];
+};
+
+const globalState = globalThis as unknown as {
+  __storyStore?: MemoryStoryStore;
+};
+
+if (!globalState.__storyStore) {
+  globalState.__storyStore = {
+    stories: [],
+    reactions: [],
+  };
+}
+
+const memoryStoryStore = globalState.__storyStore!;
+
+type PrismaStoryDelegate = {
+  create?: (...args: any[]) => Promise<any>;
+  findMany?: (...args: any[]) => Promise<any>;
+  findUnique?: (...args: any[]) => Promise<any>;
+  update?: (...args: any[]) => Promise<any>;
+  delete?: (...args: any[]) => Promise<any>;
+  groupBy?: (...args: any[]) => Promise<any>;
+};
+
+function getUserSuccessStoryDelegate(): PrismaStoryDelegate | null {
+  const client = prisma as unknown as { userSuccessStory?: PrismaStoryDelegate };
+  return client.userSuccessStory ?? null;
+}
+
+function getStoryReactionDelegate(): PrismaStoryDelegate | null {
+  const client = prisma as unknown as { storyReaction?: PrismaStoryDelegate };
+  return client.storyReaction ?? null;
+}
 
 // Check if database is available
 async function isDatabaseAvailable(): Promise<boolean> {
@@ -475,7 +545,7 @@ export async function getUserTransactions(whopId: string, days: number = 30) {
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - days);
 
-    const transactions = await prisma.transaction.findMany({
+    const transactions: Transaction[] = await prisma.transaction.findMany({
       where: {
         userId: user.id,
         transactionDate: { gte: fromDate },
@@ -565,7 +635,7 @@ export async function detectRecurringTransactions(whopId: string) {
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - 90);
 
-    const transactions = await prisma.transaction.findMany({
+    const transactions: Transaction[] = await prisma.transaction.findMany({
       where: {
         userId: user.id,
         transactionDate: { gte: fromDate },
@@ -575,7 +645,7 @@ export async function detectRecurringTransactions(whopId: string) {
     });
 
     // Group by merchant name
-    const merchantGroups: Record<string, any[]> = {};
+    const merchantGroups: Record<string, Transaction[]> = {};
     transactions.forEach((tx) => {
       const merchant = tx.merchantName || tx.description;
       if (!merchantGroups[merchant]) {
@@ -587,7 +657,15 @@ export async function detectRecurringTransactions(whopId: string) {
     // Find recurring patterns (3+ transactions with similar amounts)
     const recurring = Object.entries(merchantGroups)
       .filter(([_, txs]) => txs.length >= 3)
-      .map(([merchant, txs]) => {
+      .map(([merchant, txs]): {
+        merchant: string;
+        amount: number;
+        frequency: string;
+        count: number;
+        lastCharge: Date;
+        estimatedAnnualCost: number;
+        category: string;
+      } | null => {
         const amounts = txs.map((tx) => Math.abs(tx.amount));
         const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
         const amountVariance = Math.max(...amounts) - Math.min(...amounts);
@@ -598,7 +676,7 @@ export async function detectRecurringTransactions(whopId: string) {
         if (isRecurring) {
           // Calculate frequency
           const dates = txs.map((tx) => tx.transactionDate.getTime()).sort();
-          const intervals = [];
+          const intervals: number[] = [];
           for (let i = 1; i < dates.length; i++) {
             intervals.push((dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24)); // Days
           }
@@ -628,6 +706,638 @@ export async function detectRecurringTransactions(whopId: string) {
   } catch (error) {
     console.error('Error detecting recurring transactions:', error);
     return null;
+  }
+}
+
+// ============================================
+// COMMUNITY STORIES & LEADERBOARD
+// ============================================
+
+export interface CreateCommunityStoryInput {
+  authorName: string;
+  goalType: string;
+  title: string;
+  summary: string;
+  story: string;
+  tips?: string[];
+  milestones?: Record<string, unknown>;
+  region?: string;
+  targetAmount?: number;
+  timeframeMonths?: number;
+  visibility?: 'public' | 'friends' | 'private';
+}
+
+export interface StoryFilterOptions {
+  status?: 'pending' | 'approved' | 'rejected';
+  visibility?: 'public' | 'friends' | 'private';
+  goalType?: string;
+  region?: string;
+  limit?: number;
+}
+
+function mapStoryFromDb(story: any): CommunityStory {
+  return {
+    id: story.id,
+    userId: story.userId,
+    authorName: story.authorName,
+    goalType: story.goalType,
+    title: story.title,
+    summary: story.summary,
+    story: story.story,
+    tips: story.tips || [],
+    milestones: story.milestones as Record<string, unknown> | null,
+    region: story.region,
+    targetAmount: story.targetAmount,
+    timeframeMonths: story.timeframeMonths,
+    visibility: story.visibility,
+    status: story.status,
+    likes: story.likes ?? 0,
+    commentCount: story.commentCount ?? 0,
+    featured: story.featured ?? false,
+    submittedAt: (story.submittedAt instanceof Date ? story.submittedAt : new Date(story.submittedAt)).toISOString(),
+    updatedAt: (story.updatedAt instanceof Date ? story.updatedAt : new Date(story.updatedAt)).toISOString(),
+  };
+}
+
+function mapStoryFromMemory(story: MemoryStory): CommunityStory {
+  return {
+    ...story,
+    tips: story.tips || [],
+    milestones: story.milestones ?? null,
+  };
+}
+
+function storyAutoApprove(): boolean {
+  return process.env.STORY_AUTO_APPROVE !== 'false';
+}
+
+export async function createCommunityStory(
+  whopId: string,
+  input: CreateCommunityStoryInput,
+): Promise<CommunityStory | null> {
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+    const status = storyAutoApprove() ? 'approved' : 'pending';
+    const storyDelegate = getUserSuccessStoryDelegate();
+
+    if (dbAvailable && storyDelegate?.create) {
+      const user = await findOrCreateUser(whopId);
+      if (!user) return null;
+
+      const created = await storyDelegate.create({
+        data: {
+          userId: user.id,
+          authorName: input.authorName,
+          goalType: input.goalType,
+          title: input.title,
+          summary: input.summary,
+          story: input.story,
+          tips: input.tips || [],
+          milestones: input.milestones,
+          region: input.region,
+          targetAmount: input.targetAmount,
+          timeframeMonths: input.timeframeMonths,
+          visibility: input.visibility || 'public',
+          status,
+        },
+      });
+
+      const mapped = mapStoryFromDb(created);
+      storyEvents.emitEvent({
+        type: 'story_created',
+        storyId: mapped.id,
+        payload: {
+          goalType: mapped.goalType,
+          title: mapped.title,
+          authorName: mapped.authorName,
+          summary: mapped.summary,
+          status: mapped.status,
+          visibility: mapped.visibility,
+          submittedAt: mapped.submittedAt,
+        },
+      });
+
+      return mapped;
+    }
+
+    if (dbAvailable && !storyDelegate?.create) {
+      console.warn(
+        '[CommunityStories] Prisma client missing userSuccessStory delegate. Falling back to in-memory store. Run `prisma generate` to sync types.',
+      );
+    }
+
+    const story: MemoryStory = {
+      id: randomUUID(),
+      userId: whopId,
+      authorName: input.authorName,
+      goalType: input.goalType,
+      title: input.title,
+      summary: input.summary,
+      story: input.story,
+      tips: input.tips || [],
+      milestones: input.milestones ?? null,
+      region: input.region ?? null,
+      targetAmount: input.targetAmount ?? null,
+      timeframeMonths: input.timeframeMonths ?? null,
+      visibility: input.visibility || 'public',
+      status,
+      likes: 0,
+      commentCount: 0,
+      featured: false,
+      submittedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    memoryStoryStore.stories.unshift(story);
+
+    storyEvents.emitEvent({
+      type: 'story_created',
+      storyId: story.id,
+      payload: {
+        goalType: story.goalType,
+        title: story.title,
+        authorName: story.authorName,
+        summary: story.summary,
+        status: story.status,
+        visibility: story.visibility,
+        submittedAt: story.submittedAt,
+      },
+    });
+
+    return mapStoryFromMemory(story);
+  } catch (error) {
+    console.error('Error creating community story:', error);
+    return null;
+  }
+}
+
+export async function listCommunityStories(
+  filters: StoryFilterOptions = {},
+): Promise<CommunityStory[]> {
+  const {
+    status = 'approved',
+    visibility = 'public',
+    goalType,
+    region,
+    limit = 50,
+  } = filters;
+
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+    const storyDelegate = getUserSuccessStoryDelegate();
+
+    if (dbAvailable && storyDelegate?.findMany) {
+      const storyModel = storyDelegate as {
+        findMany: (...args: any[]) => Promise<any>;
+      };
+      const where: Record<string, unknown> = {};
+      if (status) where.status = status;
+      if (visibility) where.visibility = visibility;
+      if (goalType && goalType !== 'all') where.goalType = goalType;
+      if (region && region !== 'all') where.region = region;
+
+      const stories = await storyModel.findMany({
+        where,
+        orderBy: { submittedAt: 'desc' },
+        take: limit,
+      });
+
+      return stories.map(mapStoryFromDb);
+    }
+
+    if (dbAvailable && !storyDelegate?.findMany) {
+      console.warn(
+        '[CommunityStories] Prisma client missing userSuccessStory delegate. Falling back to in-memory store. Run `prisma generate` to sync types.',
+      );
+    }
+
+    return memoryStoryStore.stories
+      .filter(story => {
+        if (status && story.status !== status) return false;
+        if (visibility && story.visibility !== visibility) return false;
+        if (goalType && goalType !== 'all' && story.goalType !== goalType) return false;
+        if (region && region !== 'all' && story.region !== region) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+      .slice(0, limit)
+      .map(mapStoryFromMemory);
+  } catch (error) {
+    console.error('Error listing community stories:', error);
+    return [];
+  }
+}
+
+export async function addStoryReaction(
+  storyId: string,
+  whopId: string,
+  reaction: string = 'like',
+): Promise<{ likes: number } | null> {
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+    const storyDelegate = getUserSuccessStoryDelegate();
+    const reactionDelegate = getStoryReactionDelegate();
+
+    if (dbAvailable && storyDelegate && reactionDelegate) {
+      const hasRequiredMethods =
+        typeof reactionDelegate.findUnique === 'function' &&
+        typeof reactionDelegate.create === 'function' &&
+        typeof storyDelegate.findUnique === 'function' &&
+        typeof storyDelegate.update === 'function';
+
+      if (!hasRequiredMethods) {
+        console.warn(
+          '[CommunityStories] Prisma client stories/reactions delegates missing methods. Falling back to in-memory store. Run `prisma generate` to sync types.',
+        );
+      } else {
+        const reactionModel = reactionDelegate as {
+          findUnique: (...args: any[]) => Promise<any>;
+          create: (...args: any[]) => Promise<any>;
+        };
+        const storyModel = storyDelegate as {
+          findUnique: (...args: any[]) => Promise<any>;
+          update: (...args: any[]) => Promise<any>;
+        };
+
+      const user = await findOrCreateUser(whopId);
+      if (!user) return null;
+
+        const existing = await reactionModel.findUnique({
+          where: {
+            storyId_actorId_reaction: {
+              storyId,
+              actorId: user.id,
+              reaction,
+            },
+          },
+        });
+
+        if (existing) {
+          const story = await storyModel.findUnique({
+            where: { id: storyId },
+            select: { likes: true },
+          });
+          return story ? { likes: story.likes } : null;
+        }
+
+        const [, updatedStory] = await prisma.$transaction([
+          reactionModel.create({
+            data: {
+              storyId,
+              actorId: user.id,
+              reaction,
+            },
+          }),
+          storyModel.update({
+            where: { id: storyId },
+            data: { likes: { increment: 1 } },
+            select: { likes: true },
+          }),
+        ] as Prisma.PrismaPromise<any>[]);
+
+        storyEvents.emitEvent({
+          type: 'story_reaction',
+          storyId,
+          payload: {
+            userId: whopId,
+            reaction,
+            likes: updatedStory.likes ?? 0,
+          },
+        });
+
+        return { likes: updatedStory.likes ?? 0 };
+      }
+    }
+
+    if (
+      dbAvailable &&
+      (!storyDelegate ||
+        !reactionDelegate ||
+        typeof reactionDelegate.findUnique !== 'function' ||
+        typeof reactionDelegate.create !== 'function' ||
+        typeof storyDelegate.findUnique !== 'function' ||
+        typeof storyDelegate.update !== 'function')
+    ) {
+      console.warn(
+        '[CommunityStories] Prisma client missing stories/reactions delegates. Falling back to in-memory store. Run `prisma generate` to sync types.',
+      );
+    }
+
+    const story = memoryStoryStore.stories.find(s => s.id === storyId);
+    if (!story) return null;
+
+    const alreadyReacted = memoryStoryStore.reactions.some(
+      (r) => r.storyId === storyId && r.actorId === whopId && r.reaction === reaction,
+    );
+    if (alreadyReacted) {
+      return { likes: story.likes };
+    }
+
+    const reactionRecord: MemoryReaction = {
+      id: randomUUID(),
+      storyId,
+      actorId: whopId,
+      reaction,
+      createdAt: new Date().toISOString(),
+    };
+
+    memoryStoryStore.reactions.push(reactionRecord);
+    story.likes += 1;
+    story.updatedAt = new Date().toISOString();
+
+    storyEvents.emitEvent({
+      type: 'story_reaction',
+      storyId,
+      payload: {
+        userId: whopId,
+        reaction,
+        likes: story.likes,
+      },
+    });
+
+    return { likes: story.likes };
+  } catch (error) {
+    console.error('Error adding story reaction:', error);
+    return null;
+  }
+}
+
+export async function removeStoryReaction(
+  storyId: string,
+  whopId: string,
+  reaction: string = 'like',
+): Promise<{ likes: number } | null> {
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+    const storyDelegate = getUserSuccessStoryDelegate();
+    const reactionDelegate = getStoryReactionDelegate();
+
+    if (dbAvailable && storyDelegate && reactionDelegate) {
+      const hasRequiredMethods =
+        typeof reactionDelegate.findUnique === 'function' &&
+        typeof reactionDelegate.delete === 'function' &&
+        typeof storyDelegate.findUnique === 'function' &&
+        typeof storyDelegate.update === 'function';
+
+      if (!hasRequiredMethods) {
+        console.warn(
+          '[CommunityStories] Prisma client stories/reactions delegates missing methods. Falling back to in-memory store. Run `prisma generate` to sync types.',
+        );
+      } else {
+        const reactionModel = reactionDelegate as {
+          findUnique: (...args: any[]) => Promise<any>;
+          delete: (...args: any[]) => Promise<any>;
+        };
+        const storyModel = storyDelegate as {
+          findUnique: (...args: any[]) => Promise<any>;
+          update: (...args: any[]) => Promise<any>;
+        };
+
+      const user = await findOrCreateUser(whopId);
+      if (!user) return null;
+
+        const existing = await reactionModel.findUnique({
+          where: {
+            storyId_actorId_reaction: {
+              storyId,
+              actorId: user.id,
+              reaction,
+            },
+          },
+        });
+
+        if (!existing) {
+          const story = await storyModel.findUnique({
+            where: { id: storyId },
+            select: { likes: true },
+          });
+          return story ? { likes: story.likes } : null;
+        }
+
+        const [, updatedStory] = await prisma.$transaction([
+          reactionModel.delete({
+            where: { id: existing.id },
+          }),
+          storyModel.update({
+            where: { id: storyId },
+            data: { likes: { decrement: 1 } },
+            select: { likes: true },
+          }),
+        ] as Prisma.PrismaPromise<any>[]);
+
+        storyEvents.emitEvent({
+          type: 'story_reaction',
+          storyId,
+          payload: {
+            userId: whopId,
+            reaction: `${reaction}_removed`,
+            likes: updatedStory.likes ?? 0,
+          },
+        });
+
+        return { likes: Math.max(0, updatedStory.likes ?? 0) };
+      }
+    }
+
+    if (
+      dbAvailable &&
+      (!storyDelegate ||
+        !reactionDelegate ||
+        typeof reactionDelegate.findUnique !== 'function' ||
+        typeof reactionDelegate.delete !== 'function' ||
+        typeof storyDelegate.findUnique !== 'function' ||
+        typeof storyDelegate.update !== 'function')
+    ) {
+      console.warn(
+        '[CommunityStories] Prisma client missing stories/reactions delegates. Falling back to in-memory store. Run `prisma generate` to sync types.',
+      );
+    }
+
+    const story = memoryStoryStore.stories.find(s => s.id === storyId);
+    if (!story) return null;
+
+    const index = memoryStoryStore.reactions.findIndex(
+      (r) => r.storyId === storyId && r.actorId === whopId && r.reaction === reaction,
+    );
+    if (index === -1) {
+      return { likes: story.likes };
+    }
+
+    memoryStoryStore.reactions.splice(index, 1);
+    story.likes = Math.max(0, story.likes - 1);
+    story.updatedAt = new Date().toISOString();
+
+    storyEvents.emitEvent({
+      type: 'story_reaction',
+      storyId,
+      payload: {
+        userId: whopId,
+        reaction: `${reaction}_removed`,
+        likes: story.likes,
+      },
+    });
+
+    return { likes: story.likes };
+  } catch (error) {
+    console.error('Error removing story reaction:', error);
+    return null;
+  }
+}
+
+export async function getStoryLeaderboard(
+  options: { timeframeDays?: number; limit?: number } = {},
+): Promise<StoryLeaderboard> {
+  const timeframeDays = options.timeframeDays ?? 30;
+  const limit = options.limit ?? 5;
+  const since = new Date(Date.now() - timeframeDays * 24 * 60 * 60 * 1000);
+
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+
+    if (dbAvailable) {
+      const storyDelegate = getUserSuccessStoryDelegate();
+      const hasRequiredMethods =
+        storyDelegate &&
+        typeof storyDelegate.findMany === 'function' &&
+        typeof storyDelegate.groupBy === 'function';
+
+      if (hasRequiredMethods) {
+        const storyModel = storyDelegate as {
+          findMany: (...args: any[]) => Promise<any>;
+          groupBy: (...args: any[]) => Promise<any>;
+        };
+      const where = {
+        status: 'approved' as const,
+        visibility: 'public' as const,
+        submittedAt: { gte: since },
+      };
+
+      const topStories = await storyModel.findMany({
+        where,
+        orderBy: [
+          { likes: 'desc' },
+          { submittedAt: 'desc' },
+        ],
+        take: limit,
+        select: {
+          id: true,
+          title: true,
+          authorName: true,
+          likes: true,
+          goalType: true,
+          submittedAt: true,
+        },
+      });
+
+      const goalTypeTrends = await storyModel.groupBy({
+        by: ['goalType'],
+        where,
+        _count: { _all: true },
+        orderBy: {
+          _count: {
+            _all: 'desc',
+          },
+        },
+        take: limit,
+      });
+
+      const recentContributors = await storyModel.groupBy({
+        by: ['authorName'],
+        where,
+        _count: { _all: true },
+        orderBy: {
+          _count: {
+            _all: 'desc',
+          },
+        },
+        take: limit,
+      });
+
+      type TopStoryRecord = typeof topStories[number];
+      type GoalTypeTrendRecord = typeof goalTypeTrends[number];
+      type ContributorRecord = typeof recentContributors[number];
+
+      return {
+        topStories: topStories.map((story: TopStoryRecord) => ({
+          id: story.id,
+          title: story.title,
+          authorName: story.authorName,
+          likes: story.likes ?? 0,
+          goalType: story.goalType,
+          submittedAt: story.submittedAt.toISOString(),
+        })),
+        goalTypeTrends: goalTypeTrends.map((group: GoalTypeTrendRecord) => ({
+          goalType: group.goalType,
+          stories: group._count._all,
+        })),
+        recentContributors: recentContributors.map((group: ContributorRecord) => ({
+          authorName: group.authorName,
+          stories: group._count._all,
+        })),
+      };
+      }
+
+      console.warn(
+        '[CommunityStories] Prisma client missing userSuccessStory delegate/groupBy. Falling back to in-memory leaderboard. Run `prisma generate` to sync types.',
+      );
+    }
+
+    // Memory fallback
+    const filtered = memoryStoryStore.stories.filter((story) => {
+      return (
+        story.status === 'approved' &&
+        story.visibility === 'public' &&
+        new Date(story.submittedAt) >= since
+      );
+    });
+
+    const topStories = [...filtered]
+      .sort((a, b) => {
+        if (b.likes === a.likes) {
+          return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+        }
+        return b.likes - a.likes;
+      })
+      .slice(0, limit)
+      .map((story) => ({
+        id: story.id,
+        title: story.title,
+        authorName: story.authorName,
+        likes: story.likes,
+        goalType: story.goalType,
+        submittedAt: story.submittedAt,
+      }));
+
+    const trendMap = new Map<string, number>();
+    filtered.forEach((story) => {
+      trendMap.set(story.goalType, (trendMap.get(story.goalType) || 0) + 1);
+    });
+    const goalTypeTrends = Array.from(trendMap.entries())
+      .map(([goalType, count]) => ({ goalType, stories: count }))
+      .sort((a, b) => b.stories - a.stories)
+      .slice(0, limit);
+
+    const contributorMap = new Map<string, number>();
+    filtered.forEach((story) => {
+      contributorMap.set(story.authorName, (contributorMap.get(story.authorName) || 0) + 1);
+    });
+    const recentContributors = Array.from(contributorMap.entries())
+      .map(([authorName, stories]) => ({ authorName, stories }))
+      .sort((a, b) => b.stories - a.stories)
+      .slice(0, limit);
+
+    return {
+      topStories,
+      goalTypeTrends,
+      recentContributors,
+    };
+  } catch (error) {
+    console.error('Error getting story leaderboard:', error);
+    return {
+      topStories: [],
+      goalTypeTrends: [],
+      recentContributors: [],
+    };
   }
 }
 
@@ -684,10 +1394,19 @@ export async function getUserFinancialContext(whopId: string) {
     }
 
     // Calculate totals
-    const totalMonthlyBills = user.bills.reduce((sum, bill) => sum + bill.amount, 0);
-    const totalDebt = user.debts.reduce((sum, debt) => sum + debt.balance, 0);
+    const totalMonthlyBills = user.bills.reduce(
+      (sum: number, bill: Bill) => sum + bill.amount,
+      0,
+    );
+    const totalDebt = user.debts.reduce(
+      (sum: number, debt: Debt) => sum + debt.balance,
+      0,
+    );
     const weightedDebtAPR = user.debts.length > 0
-      ? user.debts.reduce((sum, debt) => sum + (debt.interestRate * debt.balance), 0) / totalDebt
+      ? user.debts.reduce(
+          (sum: number, debt: Debt) => sum + debt.interestRate * debt.balance,
+          0,
+        ) / totalDebt
       : 0;
 
     // Calculate progress
@@ -737,7 +1456,7 @@ export async function getUserFinancialContext(whopId: string) {
       } : null,
 
       // Bills
-      bills: user.bills.map(bill => ({
+      bills: user.bills.map((bill: Bill) => ({
         name: bill.name,
         category: bill.category,
         amount: bill.amount,
@@ -746,7 +1465,7 @@ export async function getUserFinancialContext(whopId: string) {
       totalMonthlyBills,
 
       // Debts
-      debts: user.debts.map(debt => ({
+      debts: user.debts.map((debt: Debt) => ({
         name: debt.name,
         type: debt.type,
         balance: debt.balance,
@@ -768,7 +1487,7 @@ export async function getUserFinancialContext(whopId: string) {
       } : null,
 
       // Bank accounts (NEW)
-      bankAccounts: user.bankConnections.map(conn => ({
+      bankAccounts: user.bankConnections.map((conn) => ({
         name: conn.accountName,
         type: conn.accountType,
         balance: conn.currentBalance,
@@ -800,7 +1519,7 @@ export async function getUserFinancialContext(whopId: string) {
 
       // Summary flags
       hasDebt: totalDebt > 0,
-      highInterestDebt: user.debts.some(d => d.interestRate > 15),
+      highInterestDebt: user.debts.some((d: Debt) => d.interestRate > 15),
       hasGoal: !!user.goal,
       goalProgress: progressPercent,
       hasSpendingData: !!spendingData,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { WhopProvider } from "./providers";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { ThemeProvider } from "./theme-provider";
 
 export const metadata: Metadata = {
   title: "Networth",
@@ -22,10 +23,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <WhopProvider>
-          <OfflineIndicator />
-          {children}
-        </WhopProvider>
+        <ThemeProvider>
+          <WhopProvider>
+            <OfflineIndicator />
+            <div className="bg-surface-muted text-muted-foreground text-center py-2 text-sm">
+              AI Assistant is temporarily unavailable while we work on upgrades.
+            </div>
+            {children}
+          </WhopProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -29,6 +29,28 @@ export default function SettingsPage() {
     return <LoadingScreen message="Loading settings..." />;
   }
 
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-background transition-colors">
+        <Navigation />
+        <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+          <Card className="p-8 text-center">
+            <h1 className="mb-2 text-3xl font-bold text-foreground">Settings</h1>
+            <p className="text-muted">Manage your account and preferences</p>
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => router.push('/login')}
+                className="rounded-lg bg-[var(--button-primary-bg)] px-6 py-3 font-semibold text-[color:var(--button-primary-fg)] transition-opacity hover:opacity-90"
+              >
+                Sign In
+              </button>
+            </div>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   const settingsSections = [
     {
       title: 'Account',
@@ -111,23 +133,23 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background transition-colors">
       <Navigation />
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
+
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">Manage your account and preferences</p>
+          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+          <p className="text-muted">Customize your account and preferences</p>
         </div>
 
         {/* Settings Sections */}
         <div className="space-y-6">
           {settingsSections.map((section) => (
-            <Card key={section.title}>
+            <Card key={section.title} className="border border-border/60 bg-surface">
               <div className="p-6">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="mb-4 flex items-center gap-3">
                   <span className="text-3xl">{section.icon}</span>
-                  <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
+                  <h2 className="text-xl font-bold text-foreground">{section.title}</h2>
                 </div>
 
                 <div className="space-y-3">
@@ -136,20 +158,20 @@ export default function SettingsPage() {
                       key={idx}
                       onClick={item.action || (() => {})}
                       disabled={item.disabled}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                      className={`w-full rounded-lg border-2 p-4 text-left transition-all ${
                         item.disabled
-                          ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
-                          : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 cursor-pointer'
+                          ? 'cursor-not-allowed border-border/40 bg-surface-muted opacity-60'
+                          : 'cursor-pointer border-border/60 bg-surface hover:border-accent/60 hover:bg-surface-muted'
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <span className="text-2xl flex-shrink-0">{item.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 mb-1">{item.label}</h3>
-                          <p className="text-sm text-gray-600">{item.description}</p>
+                        <span className="flex-shrink-0 text-2xl">{item.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="mb-1 font-semibold text-foreground">{item.label}</h3>
+                          <p className="text-sm text-muted-foreground">{item.description}</p>
                         </div>
                         {!item.disabled && (
-                          <span className="text-gray-400 text-xl flex-shrink-0">→</span>
+                          <span className="flex-shrink-0 text-xl text-muted">→</span>
                         )}
                       </div>
                     </button>
@@ -162,15 +184,15 @@ export default function SettingsPage() {
 
         {/* Account Info */}
         {userId && (
-          <Card className="mt-6">
+          <Card className="mt-6 border border-border/60 bg-surface">
             <div className="p-6">
-              <h3 className="font-bold text-gray-900 mb-3">Account Information</h3>
-              <div className="space-y-2 text-sm text-gray-600">
+              <h3 className="mb-3 font-bold text-foreground">Account Information</h3>
+              <div className="space-y-2 text-sm text-muted-foreground">
                 <p>
-                  <strong>User ID:</strong> {userId.substring(0, 8)}...
+                  <strong className="text-foreground">User ID:</strong> {userId.substring(0, 8)}...
                 </p>
                 <p>
-                  <strong>Membership:</strong> {hasAccess ? 'Premium' : 'Free'}
+                  <strong className="text-foreground">Membership:</strong> {hasAccess ? 'Premium' : 'Free'}
                 </p>
               </div>
             </div>
@@ -179,8 +201,8 @@ export default function SettingsPage() {
 
         {/* Version Info */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">Networth v1.0.0</p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground">Networth v1.0.0</p>
+          <p className="mt-1 text-xs text-muted">
             Built with research from 552 university students
           </p>
         </div>

@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
-export default {
+const config: Config = {
+  darkMode: ['class', '[data-theme="dark"]'],
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,6 +12,13 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        surface: "var(--surface)",
+        "surface-muted": "var(--surface-muted)",
+        border: "var(--border)",
+        muted: "var(--muted)",
+        "muted-foreground": "var(--muted-foreground)",
+        accent: "var(--accent)",
+        "accent-foreground": "var(--accent-foreground)",
         primary: {
           50: '#fafafa',
           100: '#f4f4f5',
@@ -62,6 +70,11 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Cal Sans', 'Inter', 'system-ui', 'sans-serif'],
       },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
         'soft-lg': '0 10px 40px -10px rgba(0, 0, 0, 0.1)',
@@ -104,4 +117,6 @@ export default {
     },
   },
   plugins: [],
-} satisfies Config;
+};
+
+export default config;

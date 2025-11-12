@@ -112,11 +112,11 @@ export default function ProductsPage() {
 
   if (!userId) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background transition-colors">
         <Navigation />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <Card className="p-8 text-center">
-            <p className="text-gray-600">Please log in to view products.</p>
+            <p className="text-muted">Please log in to view products.</p>
           </Card>
         </main>
       </div>
@@ -124,31 +124,31 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background transition-colors">
       <Navigation />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Financial Products</h1>
-          <p className="text-lg text-gray-600 max-w-3xl">
+          <h1 className="mb-3 text-4xl font-bold text-foreground">Financial Products</h1>
+          <p className="max-w-3xl text-lg text-muted">
             Find products that help you reach your goal AND build good habits. Every product here
             offers dual benefits - we call them "two-for-one deals."
           </p>
         </div>
 
         {/* Filters */}
-        <Card className="p-6 mb-6 animate-slide-up">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="mb-6 border border-border/60 bg-surface p-6 shadow-sm animate-slide-up">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Product Type Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-muted">
                 Product Type
               </label>
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground transition focus:border-transparent focus:ring-2 focus:ring-accent"
               >
                 <option value="all">All Types</option>
                 <option value="savings_account">Savings Accounts</option>
@@ -161,13 +161,13 @@ export default function ProductsPage() {
 
             {/* Region Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-muted">
                 Region
               </label>
               <select
                 value={selectedRegion}
                 onChange={(e) => setSelectedRegion(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground transition focus:border-transparent focus:ring-2 focus:ring-accent"
               >
                 <option value="all">All Regions</option>
                 <option value="US">United States</option>
@@ -178,13 +178,13 @@ export default function ProductsPage() {
 
             {/* Goal Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-muted">
                 Goal Type
               </label>
               <select
                 value={selectedGoal}
                 onChange={(e) => setSelectedGoal(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground transition focus:border-transparent focus:ring-2 focus:ring-accent"
               >
                 <option value="all">All Goals</option>
                 <option value="house">🏠 House</option>
@@ -197,8 +197,8 @@ export default function ProductsPage() {
           </div>
 
           {/* Results Count & Comparison */}
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-sm text-gray-600">
+          <div className="mt-4 flex items-center justify-between text-sm text-muted">
+            <p>
               Showing {filteredProducts.length} of {products.length} products
             </p>
             {comparing.length > 0 && (
@@ -207,7 +207,7 @@ export default function ProductsPage() {
                   const element = document.getElementById('comparison');
                   element?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="text-sm text-purple-600 hover:text-purple-700 font-semibold"
+                className="font-semibold text-accent transition-colors hover:opacity-80"
               >
                 Compare Selected ({comparing.length})
               </button>
@@ -217,13 +217,13 @@ export default function ProductsPage() {
 
         {/* Products Grid */}
         {filteredProducts.length === 0 ? (
-          <Card className="p-8 text-center">
-            <div className="text-5xl mb-4">🔍</div>
-            <p className="text-gray-500 mb-2">No products match your filters</p>
-            <p className="text-sm text-gray-400">Try adjusting your search criteria</p>
+          <Card className="border border-border/60 bg-surface p-8 text-center shadow-sm">
+            <div className="mb-4 text-5xl">🔍</div>
+            <p className="mb-2 text-muted">No products match your filters</p>
+            <p className="text-sm text-muted-foreground">Try adjusting your search criteria</p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
             {filteredProducts.map((product) => (
               <ProductCard
                 key={product.id}
@@ -246,27 +246,27 @@ export default function ProductsPage() {
         )}
 
         {/* Info Section */}
-        <Card className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 animate-slide-up">
+        <Card className="border border-border/60 bg-surface-muted p-6 shadow-sm animate-slide-up dark:bg-surface/70">
           <div className="flex items-start gap-4">
             <span className="text-4xl">💡</span>
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">About "Two-for-One Deals"</h3>
-              <p className="text-sm text-gray-700 mb-3">
+              <h3 className="mb-2 font-bold text-foreground">About "Two-for-One Deals"</h3>
+              <p className="mb-3 text-sm text-muted-foreground">
                 Based on research with 552 university students, we found people want products that
                 don't just help their goal, but also build good financial habits.
               </p>
-              <p className="text-sm text-gray-700 mb-3">
+              <p className="mb-3 text-sm text-muted-foreground">
                 Every product here offers dual benefits:
               </p>
-              <ul className="space-y-2 text-sm text-gray-700">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <span className="text-green-600 font-bold">1.</span>
+                  <span className="font-bold text-green-500">1.</span>
                   <span>
                     <strong>Direct benefit:</strong> Higher interest rates, rewards, no fees
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">2.</span>
+                  <span className="font-bold text-blue-500">2.</span>
                   <span>
                     <strong>Habit benefit:</strong> Automatic savings, budgeting tools, credit building
                   </span>

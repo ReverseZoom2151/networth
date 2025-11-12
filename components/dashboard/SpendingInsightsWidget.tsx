@@ -36,6 +36,13 @@ export function SpendingInsightsWidget({ userId }: SpendingInsightsWidgetProps) 
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
 
+  const scrollToConnect = () => {
+    const target = document.getElementById('connect-bank-widget');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   useEffect(() => {
     loadSpendingData();
   }, [userId, days]);
@@ -98,13 +105,22 @@ export function SpendingInsightsWidget({ userId }: SpendingInsightsWidgetProps) 
   if (!spendingData) {
     return (
       <Card>
-        <CardBody className="p-6">
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">
-              Connect your bank account to see spending insights
+        <CardBody className="flex flex-col items-center gap-4 px-6 py-8 text-center">
+          <div className="text-3xl">🔌</div>
+          <div className="max-w-sm space-y-2">
+            <h3 className="text-lg font-semibold text-foreground">Spending insights are ready <br /> when your bank is</h3>
+            <p className="text-sm text-muted-foreground">
+              Connect an account to unlock category breakdowns, cash-flow tracking, and personalized nudges.
             </p>
-            <Button variant="primary">Connect Bank Account</Button>
           </div>
+          <ul className="space-y-1 text-xs text-muted-foreground text-left">
+            <li>✓ Automatic transaction categorization</li>
+            <li>✓ Spot recurring charges and subscriptions</li>
+            <li>✓ Track net cash flow across your accounts</li>
+          </ul>
+          <Button variant="primary" size="sm" onClick={scrollToConnect}>
+            Jump to Connect Accounts
+          </Button>
         </CardBody>
       </Card>
     );

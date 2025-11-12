@@ -124,30 +124,29 @@ export default function DashboardPage() {
     { name: 'Budget Tracker', icon: '💳', description: 'Track spending across categories', href: '/tools' },
     { name: 'Bill Reminders', icon: '🔔', description: 'Never miss a payment', href: '/tools' },
     { name: 'Debt Payoff', icon: '💸', description: 'Compare payoff strategies', href: '/tools' },
-    { name: 'Ask AI Assistant', icon: '🤖', description: 'Chat & research with AI', href: '/ai', premium: true },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background transition-colors">
       <Navigation />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      <main className="mx-auto max-w-7xl px-4 py-8 animate-fade-in sm:px-6 lg:px-8">
         {/* Subscribe CTA Banner */}
         {!hasAccess && (
-          <div className="relative bg-black rounded-2xl p-6 mb-6 text-white border border-gray-800 shadow-soft-lg animate-slide-up">
-            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="relative mb-6 rounded-2xl border border-border/80 bg-surface p-6 text-foreground shadow-soft-lg animate-slide-up">
+            <div className="relative flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <div className="flex-1">
-                <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 text-xs font-medium mb-2">
+                <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-surface-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                   <span>✨</span> Premium Features
                 </div>
-                <h3 className="text-2xl font-bold mb-1">Unlock Your Full Potential</h3>
-                <p className="text-sm text-gray-400">
+                <h3 className="mb-1 text-2xl font-bold">Unlock Your Full Potential</h3>
+                <p className="text-sm text-muted-foreground">
                   Get unlimited AI coaching and advanced features for just $10/month
                 </p>
               </div>
               <button
                 onClick={() => router.push('/subscribe')}
-                className="w-full sm:w-auto bg-white text-black font-semibold py-3 px-6 rounded-xl hover:bg-gray-100 transition-colors"
+                className="w-full rounded-xl bg-[var(--button-primary-bg)] px-6 py-3 font-semibold text-[color:var(--button-primary-fg)] transition-opacity hover:opacity-90 sm:w-auto"
               >
                 Subscribe Now
               </button>
@@ -155,19 +154,22 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Goal Overview Card - Black & White Aesthetic */}
-        <div className="bg-black rounded-2xl p-8 text-white mb-6 border border-gray-800 shadow-soft-lg animate-slide-up" style={{animationDelay: '0.1s'}}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        {/* Goal Overview Card */}
+        <div
+          className="mb-6 rounded-2xl border border-border/80 bg-surface p-8 text-foreground shadow-soft-lg animate-slide-up"
+          style={{ animationDelay: '0.1s' }}
+        >
+          <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div className="flex-1">
-              <p className="text-gray-400 text-sm mb-2">Your Goal</p>
-              <h1 className="text-3xl sm:text-4xl font-bold flex items-center space-x-3">
-                <span className="text-5xl">{getGoalEmoji(goal.type)}</span>
+              <p className="mb-2 text-sm text-muted-foreground">Your Goal</p>
+              <h1 className="flex items-center space-x-3 text-3xl font-bold sm:text-4xl">
+                <span className="text-5xl drop-shadow">{getGoalEmoji(goal.type)}</span>
                 <span>{getGoalTitle(goal.type, goal.customGoal)}</span>
               </h1>
             </div>
             <div className="text-left sm:text-right">
-              <p className="text-gray-400 text-sm mb-1">Target</p>
-              <p className="text-3xl sm:text-4xl font-bold">
+              <p className="mb-1 text-sm text-muted-foreground">Target</p>
+              <p className="text-3xl font-bold sm:text-4xl">
                 {formatCurrency(targetAmount, region)}
               </p>
             </div>
@@ -176,58 +178,58 @@ export default function DashboardPage() {
           {/* Progress Bar */}
           {currentAmount > 0 && (
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Progress</span>
+              <div className="mb-2 flex items-center justify-between text-sm text-muted-foreground">
+                <span>Progress</span>
                 <span className="text-lg font-bold">{progressPercent}%</span>
               </div>
-              <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+              <div className="h-3 w-full overflow-hidden rounded-full bg-surface-muted">
                 <div
-                  className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full transition-all duration-1000"
+                  className="h-full rounded-full bg-accent transition-all duration-1000"
                   style={{ width: `${Math.min(progressPercent, 100)}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                 <span>Current: {formatCurrency(currentAmount, region)}</span>
                 <span>Remaining: {formatCurrency(Math.max(0, targetAmount - currentAmount), region)}</span>
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-4">
             <div>
-              <p className="text-gray-400 text-sm">Timeframe</p>
+              <p className="text-sm text-muted-foreground">Timeframe</p>
               <p className="text-xl font-bold">{goal.timeframe} years</p>
             </div>
             <div className="text-right">
-              <p className="text-gray-400 text-sm">Monthly Target</p>
+              <p className="text-sm text-muted-foreground">Monthly Target</p>
               <p className="text-xl font-bold">{formatCurrency(monthlySavings, region)}</p>
             </div>
           </div>
 
           <button
             onClick={openUpdateModal}
-            className="w-full bg-white text-black font-semibold py-3 px-6 rounded-xl hover:bg-gray-100 transition-colors"
+            className="w-full rounded-xl bg-[var(--button-primary-bg)] px-6 py-3 font-semibold text-[color:var(--button-primary-fg)] transition-opacity hover:opacity-90"
           >
             Update Your Progress
           </button>
         </div>
 
         {/* Daily Tip */}
-        <Card hover className="mb-6 animate-slide-up" style={{animationDelay: '0.2s'}}>
+        <Card hover className="mb-6 bg-surface animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <CardBody>
             <div className="flex items-start space-x-4">
               <span className="text-3xl flex-shrink-0">💡</span>
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-gray-900 mb-2">Today's Tip</h3>
-                <p className="text-gray-600">{dailyTip || 'Loading your personalized tip...'}</p>
+                <h3 className="mb-2 font-bold text-foreground">Today's Tip</h3>
+                <p className="text-muted-foreground">{dailyTip || 'Loading your personalized tip...'}</p>
               </div>
             </div>
           </CardBody>
         </Card>
 
         {/* Banking & Spending Section */}
-        <div className="mb-8 space-y-6 animate-slide-up" style={{animationDelay: '0.3s'}}>
-          <h2 className="text-2xl font-bold text-gray-900">💰 Banking & Spending</h2>
+        <div className="mb-8 space-y-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          <h2 className="text-2xl font-bold text-foreground">💰 Banking & Spending</h2>
 
           {/* Banking Widget - Full Width */}
           <BankingWidget userId={userId || ''} />
@@ -240,53 +242,36 @@ export default function DashboardPage() {
         </div>
 
         {/* Dashboard Widgets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slide-up" style={{animationDelay: '0.4s'}}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
           <NewsWidget userId={userId} />
           <InterventionsWidget userId={userId} />
           <ProductsWidget userId={userId} />
         </div>
 
         {/* Quick Actions Grid */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action, index) => (
-              <Card
+        <div className="mb-6">
+          <h2 className="mb-3 text-2xl font-bold text-foreground">Quick Actions</h2>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            {quickActions.map((action) => (
+              <button
                 key={action.name}
-                hover
-                className="cursor-pointer animate-scale-in"
-                style={{animationDelay: `${0.3 + index * 0.1}s`}}
-                onClick={() => {
-                  if (action.premium && !hasAccess) {
-                    router.push('/subscribe');
-                  } else {
-                    router.push(action.href);
-                  }
-                }}
+                onClick={() => router.push(action.href)}
+                className="flex flex-col gap-1 rounded-lg border border-border/60 bg-surface px-3 py-2 text-left transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-sm"
               >
-                <CardBody className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-4xl">{action.icon}</div>
-                    {action.premium && !hasAccess && (
-                      <span className="text-xs bg-black text-white px-2.5 py-1 rounded-full font-semibold">
-                        PRO
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2 text-lg group-hover:text-black transition-colors">
-                    {action.name}
-                  </h3>
-                  <p className="text-sm text-gray-600">{action.description}</p>
-                </CardBody>
-              </Card>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{action.icon}</span>
+                  <span className="text-sm font-semibold leading-tight text-foreground">{action.name}</span>
+                </div>
+                <span className="text-[11px] leading-snug text-muted-foreground line-clamp-1">{action.description}</span>
+              </button>
             ))}
           </div>
         </div>
 
         {/* First Steps */}
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Your First Steps</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mb-6 space-y-3 animate-slide-up" style={{ animationDelay: '0.45s' }}>
+          <h2 className="text-xl font-bold text-foreground">Your First Steps</h2>
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
             {getFirstSteps(goal.type, region).map((step) => {
               const isClickable = step.actionable && (
                 step.id === 'check-credit-score' ||
@@ -295,19 +280,16 @@ export default function DashboardPage() {
               );
 
               const cardContent = (
-                <div className="flex items-start space-x-3">
-                  <span className="text-3xl flex-shrink-0">{step.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 mb-1 flex items-center flex-wrap gap-2">
-                      <span>{step.title}</span>
-                      {step.actionable && (
-                        <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap">
-                          Learn More
-                        </span>
-                      )}
-                    </h3>
-                    <p className="text-sm text-gray-600">{step.description}</p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xl">{step.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold leading-tight text-foreground">
+                        {step.title}
+                      </h3>
+                    </div>
                   </div>
+                  <p className="text-xs leading-snug text-muted-foreground line-clamp-2">{step.description}</p>
                 </div>
               );
 
@@ -315,14 +297,14 @@ export default function DashboardPage() {
                 <button
                   key={step.id}
                   onClick={() => router.push('/credit-score')}
-                  className="bg-white rounded-xl shadow-sm p-5 border border-gray-200 hover:border-gray-400 hover:shadow-md transition-all text-left w-full"
+                  className="h-full w-full rounded-lg border border-border/60 bg-surface px-3 py-2 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md"
                 >
                   {cardContent}
                 </button>
               ) : (
                 <div
                   key={step.id}
-                  className="bg-white rounded-xl shadow-sm p-5 border border-gray-200"
+                  className="h-full rounded-lg border border-border/60 bg-surface px-3 py-2 shadow-sm"
                 >
                   {cardContent}
                 </div>
@@ -335,18 +317,18 @@ export default function DashboardPage() {
       {/* Update Progress Modal */}
       {showUpdateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Update Your Progress</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Update Your Progress</h2>
+            <p className="text-muted mb-6">
               How much have you saved toward your goal?
             </p>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted mb-2">
                 Current Savings
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-lg">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-medium text-lg">
                   {goal.currency === 'USD' ? '$' : goal.currency === 'GBP' ? '£' : '€'}
                 </span>
                 <input
@@ -356,14 +338,14 @@ export default function DashboardPage() {
                   placeholder="0"
                   min="0"
                   step="0.01"
-                  className="w-full pl-10 pr-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-border bg-surface pl-10 pr-4 py-3 text-lg text-foreground focus:border-transparent focus:ring-2 focus:ring-accent"
                   autoFocus
                 />
               </div>
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted mb-2">
                 Note (Optional)
               </label>
               <input
@@ -371,7 +353,7 @@ export default function DashboardPage() {
                 value={updateNote}
                 onChange={(e) => setUpdateNote(e.target.value)}
                 placeholder="e.g., Added bonus from work"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-accent"
               />
             </div>
 
@@ -383,14 +365,14 @@ export default function DashboardPage() {
                   setUpdateNote('');
                 }}
                 disabled={isSaving}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 rounded-lg bg-surface-muted px-6 py-3 font-semibold text-muted transition-colors hover:bg-surface hover:text-foreground disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateProgress}
                 disabled={isSaving}
-                className="flex-1 bg-black hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+                className="flex-1 flex items-center justify-center rounded-lg bg-[var(--button-primary-bg)] px-6 py-3 font-semibold text-[color:var(--button-primary-fg)] transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {isSaving ? (
                   <>
@@ -411,8 +393,8 @@ export default function DashboardPage() {
 
       {/* Milestone Celebration Modal */}
       {celebrationMilestone && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center relative overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-surface p-8 text-center shadow-xl">
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
               <div className="absolute top-4 left-4 text-4xl animate-bounce">✨</div>
               <div className="absolute top-8 right-8 text-3xl animate-bounce" style={{ animationDelay: '0.1s' }}>⭐</div>
@@ -421,24 +403,24 @@ export default function DashboardPage() {
             </div>
 
             <div className="relative z-10">
-              <div className="text-7xl mb-4 animate-pulse">
+              <div className="mb-4 text-7xl animate-pulse">
                 {getMilestoneMessage(celebrationMilestone).emoji}
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              <h2 className="mb-3 text-3xl font-bold text-foreground">
                 {getMilestoneMessage(celebrationMilestone).title}
               </h2>
-              <p className="text-lg text-gray-600 mb-6">
+              <p className="mb-6 text-lg text-muted">
                 {getMilestoneMessage(celebrationMilestone).message}
               </p>
 
-              <div className="bg-gray-100 rounded-xl p-4 mb-6">
-                <p className="text-sm font-semibold text-gray-700 mb-1">Your Progress</p>
-                <p className="text-4xl font-bold text-gray-900">{celebrationMilestone}%</p>
+              <div className="mb-6 rounded-xl bg-surface-muted p-4">
+                <p className="mb-1 text-sm font-semibold text-muted">Your Progress</p>
+                <p className="text-4xl font-bold text-foreground">{celebrationMilestone}%</p>
               </div>
 
               <button
                 onClick={() => setCelebrationMilestone(null)}
-                className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                className="w-full rounded-lg bg-[var(--button-primary-bg)] px-6 py-3 font-semibold text-[color:var(--button-primary-fg)] transition-opacity hover:opacity-90"
               >
                 Continue Your Journey
               </button>

@@ -94,19 +94,19 @@ export default function InterventionModal({
   const colors = getSeverityColor();
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-surface shadow-2xl animate-scale-in">
         {/* Header */}
-        <div className={`${colors.bg} text-white p-6`}>
+        <div className={`${colors.bg} p-6 text-white`}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <span className="text-5xl">{intervention.icon || '⚠️'}</span>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs uppercase tracking-wide font-bold bg-white/20 px-2 py-1 rounded">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="rounded bg-background/25 px-2 py-1 text-xs font-bold uppercase tracking-wide text-background">
                     {intervention.severity}
                   </span>
-                  <span className="text-xs opacity-75 capitalize">
+                  <span className="text-xs capitalize opacity-75">
                     {intervention.triggerType.replace('_', ' ')}
                   </span>
                 </div>
@@ -125,22 +125,22 @@ export default function InterventionModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 p-6">
           {/* Message */}
           <div>
-            <p className="text-gray-700 text-lg leading-relaxed">{intervention.message}</p>
+            <p className="text-lg leading-relaxed text-foreground">{intervention.message}</p>
           </div>
 
           {/* Impact Calculation */}
           {intervention.calculatedImpact !== null && (
-            <div className={`p-4 rounded-lg ${colors.light} ${colors.border} border`}>
+            <div className={`rounded-lg border ${colors.border} ${colors.light} p-4`}>
               <div className="flex items-center gap-3">
                 <span className="text-2xl">💰</span>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Potential Impact</p>
+                  <p className="mb-1 text-sm text-muted">Potential Impact</p>
                   <p className={`text-2xl font-bold ${colors.text}`}>
                     ${Math.abs(intervention.calculatedImpact).toLocaleString()}
-                    <span className="text-sm font-normal text-gray-600 ml-1">
+                    <span className="ml-1 text-sm font-normal text-muted">
                       {intervention.calculatedImpact > 0 ? 'saved per month' : 'over budget'}
                     </span>
                   </p>
@@ -152,9 +152,9 @@ export default function InterventionModal({
           {/* Suggested Action */}
           {intervention.suggestedAction && (
             <div>
-              <h3 className="font-bold text-gray-900 mb-3">Recommended Action</h3>
-              <div className={`p-4 rounded-lg ${colors.light} border ${colors.border}`}>
-                <p className="text-gray-700">{intervention.suggestedAction}</p>
+              <h3 className="mb-3 font-bold text-foreground">Recommended Action</h3>
+              <div className={`rounded-lg border ${colors.border} ${colors.light} p-4`}>
+                <p className="text-muted">{intervention.suggestedAction}</p>
               </div>
             </div>
           )}
@@ -162,33 +162,31 @@ export default function InterventionModal({
           {/* Alternative Options */}
           {intervention.alternativeOptions.length > 0 && (
             <div>
-              <h3 className="font-bold text-gray-900 mb-3">Other Options</h3>
+              <h3 className="mb-3 font-bold text-foreground">Other Options</h3>
               <div className="space-y-2">
                 {intervention.alternativeOptions.map((option, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedOption(index)}
-                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    className={`w-full rounded-lg border-2 p-4 text-left transition-all ${
                       selectedOption === index
                         ? `${colors.border} ${colors.light}`
-                        : 'border-gray-200 hover:border-gray-300 bg-gray-50'
+                        : 'border-border/60 bg-surface-muted hover:border-border hover:bg-surface'
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          selectedOption === index
-                            ? `${colors.border} ${colors.bg}`
-                            : 'border-gray-300'
+                        className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                          selectedOption === index ? `${colors.border} ${colors.bg}` : 'border-border/60'
                         }`}
                       >
                         {selectedOption === index && (
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         )}
                       </div>
-                      <p className="text-sm text-gray-700">{option}</p>
+                      <p className="text-sm text-muted">{option}</p>
                     </div>
                   </button>
                 ))}
@@ -205,25 +203,25 @@ export default function InterventionModal({
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Let us know if this was helpful or how we can improve..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              className="w-full resize-none rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-accent"
               rows={3}
             />
           </div>
         </div>
 
         {/* Actions */}
-        <div className="p-6 border-t border-gray-200 flex gap-3">
+        <div className="flex gap-3 border-t border-border/60 p-6">
           <button
             onClick={handleDismiss}
             disabled={isSubmitting}
-            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+            className="flex-1 rounded-lg bg-surface-muted px-6 py-3 font-semibold text-muted transition-colors hover:bg-surface hover:text-foreground disabled:opacity-50"
           >
             {isSubmitting ? 'Processing...' : 'Dismiss'}
           </button>
           <button
             onClick={handleTakeAction}
             disabled={isSubmitting}
-            className={`flex-1 ${colors.bg} hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:opacity-50`}
+            className={`flex-1 rounded-lg px-6 py-3 font-semibold text-white transition-all disabled:opacity-50 ${colors.bg} hover:opacity-90`}
           >
             {isSubmitting ? 'Processing...' : 'Take Action'}
           </button>

@@ -87,8 +87,8 @@ export default function NewsImpactBanner({ userId }: NewsImpactBannerProps) {
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <span className="text-2xl flex-shrink-0">🚨</span>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="rounded bg-background/30 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-background">
                   Urgent
                 </span>
               </div>
@@ -102,13 +102,13 @@ export default function NewsImpactBanner({ userId }: NewsImpactBannerProps) {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={handleAction}
-              className="px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors whitespace-nowrap"
+              className="rounded-lg bg-surface px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted whitespace-nowrap"
             >
               {urgentNews.actionLabel || 'Learn More'}
             </button>
             <button
               onClick={handleDismiss}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="rounded-lg p-2 transition-colors hover:bg-background/20"
               aria-label="Dismiss"
             >
               <svg

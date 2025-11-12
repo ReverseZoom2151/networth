@@ -63,3 +63,44 @@ export interface UserProfile {
   onboardingCompleted: boolean;
   createdAt: Date;
 }
+
+export interface CommunityStory {
+  id: string;
+  userId: string;
+  authorName: string;
+  goalType: string;
+  title: string;
+  summary: string;
+  story: string;
+  tips: string[];
+  milestones?: Record<string, unknown> | null;
+  region?: string | null;
+  targetAmount?: number | null;
+  timeframeMonths?: number | null;
+  visibility: string;
+  status: string;
+  likes: number;
+  commentCount: number;
+  featured: boolean;
+  submittedAt: string;
+  updatedAt: string;
+}
+
+export interface StoryLeaderboard {
+  topStories: Array<{
+    id: string;
+    title: string;
+    authorName: string;
+    likes: number;
+    goalType: string;
+    submittedAt: string;
+  }>;
+  goalTypeTrends: Array<{
+    goalType: string;
+    stories: number;
+  }>;
+  recentContributors: Array<{
+    authorName: string;
+    stories: number;
+  }>;
+}

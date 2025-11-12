@@ -993,6 +993,56 @@ model SuccessStory {
   @@index([featured, inspirationScore])
 }
 
+model UserSuccessStory {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Story details
+  authorName      String
+  goalType        String
+  title           String
+  summary         String   @db.Text
+  story           String   @db.Text
+  milestones      Json?
+  tips            String[] @default([])
+  region          String?
+
+  // Goal metrics
+  targetAmount    Float?
+  timeframeMonths Int?
+
+  // Community metadata
+  visibility      String   @default("public") // public, friends, private
+  status          String   @default("approved") // pending, approved, rejected
+  likes           Int      @default(0)
+  commentCount    Int      @default(0)
+  featured        Boolean  @default(false)
+
+  submittedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  reactions       StoryReaction[]
+
+  @@index([status, visibility, submittedAt])
+  @@index([goalType, status, submittedAt])
+  @@index([userId, status])
+}
+
+model StoryReaction {
+  id        String            @id @default(cuid())
+  storyId   String
+  story     UserSuccessStory  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  actorId   String
+  actor     User              @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  reaction  String            @default("like") // like, celebrate, helpful etc.
+  createdAt DateTime          @default(now())
+
+  @@unique([storyId, actorId, reaction])
+  @@index([actorId])
+  @@index([reaction, createdAt])
+}
+
 // ============================================
 // INVESTMENT PLANNING & PORTFOLIO TRACKING
 // ============================================

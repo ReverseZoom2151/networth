@@ -201,43 +201,43 @@ export default function InvestQuizPage() {
     const score = Math.round((answers.reduce((sum, s) => sum + s, 0) / 100) * 100);
 
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background transition-colors">
         <Navigation />
         <main className="max-w-3xl mx-auto px-4 py-8">
           <Card className="p-8 text-center">
             <div className="text-7xl mb-4">{profile.emoji}</div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
               Your Risk Profile: {profile.level}
             </h1>
-            <p className="text-lg text-gray-600 mb-6">{profile.description}</p>
+            <p className="text-lg text-muted-foreground mb-6">{profile.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-1">Quiz Score</p>
-                <p className="text-3xl font-bold text-gray-900">{score}/100</p>
+              <div className="p-4 rounded-lg bg-surface-muted">
+                <p className="text-sm text-muted-foreground mb-1">Quiz Score</p>
+                <p className="text-3xl font-bold text-foreground">{score}/100</p>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-1">Suggested Allocation</p>
-                <p className="text-sm font-bold text-gray-900">{profile.allocation}</p>
+              <div className="p-4 rounded-lg bg-surface-muted">
+                <p className="text-sm text-muted-foreground mb-1">Suggested Allocation</p>
+                <p className="text-sm font-bold text-foreground">{profile.allocation}</p>
               </div>
             </div>
 
             <div className="space-y-3 mb-8">
               <button
                 onClick={() => router.push('/invest/learn')}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                className="w-full rounded-lg bg-accent hover:bg-accent-hover text-accent-foreground font-semibold py-3 px-6 transition-colors"
               >
                 Start Learning Modules →
               </button>
               <button
                 onClick={() => router.push('/invest/platforms')}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors"
+                className="w-full rounded-lg bg-surface hover:bg-surface-hover text-muted-foreground font-semibold py-3 px-6 transition-colors"
               >
                 View Recommended Platforms
               </button>
             </div>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Your profile has been saved. You can retake this quiz anytime.
             </p>
           </Card>
@@ -250,28 +250,25 @@ export default function InvestQuizPage() {
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background transition-colors">
       <Navigation />
       <main className="max-w-3xl mx-auto px-4 py-8">
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-muted-foreground">
               Question {currentQuestion + 1} of {questions.length}
             </span>
-            <span className="text-sm font-semibold text-purple-600">{Math.round(progress)}%</span>
+            <span className="text-sm font-semibold text-accent">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="h-2 w-full rounded-full bg-surface-muted">
+            <div className="h-2 rounded-full bg-accent transition-all" style={{ width: `${progress}%` }}></div>
           </div>
         </div>
 
         {/* Question Card */}
         <Card className="p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">{question.question}</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">{question.question}</h2>
 
           <div className="space-y-3">
             {question.options.map((option, index) => (
@@ -279,7 +276,7 @@ export default function InvestQuizPage() {
                 key={index}
                 onClick={() => handleAnswer(option.score)}
                 disabled={loading}
-                className="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all disabled:opacity-50 font-medium text-gray-800"
+                className="w-full rounded-lg border border-border text-left p-4 font-medium transition-colors shadow-sm disabled:opacity-50 text-foreground"
               >
                 {option.text}
               </button>
@@ -294,7 +291,7 @@ export default function InvestQuizPage() {
                 setCurrentQuestion(currentQuestion - 1);
                 setAnswers(answers.slice(0, -1));
               }}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-muted-foreground hover:text-foreground"
             >
               ← Back to Previous Question
             </button>

@@ -114,7 +114,7 @@ export function BankingWidget({ userId }: BankingWidgetProps) {
   }
 
   return (
-    <Card>
+    <Card id="connect-bank-widget">
       <CardBody className="p-6">
         <div className="space-y-4">
           {/* Header */}
@@ -214,9 +214,9 @@ export function BankingWidget({ userId }: BankingWidgetProps) {
 
           {/* Benefits */}
           {accounts.length === 0 && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm font-medium text-blue-900 mb-2">Why connect your bank?</p>
-              <ul className="text-xs text-blue-800 space-y-1">
+            <div className="mt-4 rounded-lg border border-border/60 bg-surface px-4 py-3">
+              <p className="mb-2 text-sm font-semibold text-foreground">Why connect your bank?</p>
+              <ul className="space-y-1 text-xs text-muted-foreground">
                 <li>✓ Automatic transaction tracking</li>
                 <li>✓ Real-time balance updates</li>
                 <li>✓ AI-powered spending insights</li>

@@ -284,9 +284,9 @@ export default function RegionSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background transition-colors">
       <Navigation />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
           <button
@@ -295,8 +295,8 @@ export default function RegionSettingsPage() {
           >
             ← Back to Settings
           </button>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Region & Location</h1>
-          <p className="text-gray-600">Choose your region for personalized financial advice and news</p>
+          <h1 className="mb-3 text-3xl font-bold text-foreground">Region Settings</h1>
+          <p className="text-muted">Update your preferred region to get personalized recommendations</p>
         </div>
 
         {/* Search & Auto-detect */}
